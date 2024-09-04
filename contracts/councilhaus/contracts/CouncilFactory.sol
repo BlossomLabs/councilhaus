@@ -12,7 +12,7 @@ contract CouncilFactory {
     event CouncilCreated(address council, address pool);
 
     error FirstMintToAndAmountLengthMismatch();
-    error PoolCreationFailed();
+    error GDAv1ForwarderMustBeAContract();
 
     struct DeploymentConfig {
         string councilName;
@@ -28,7 +28,7 @@ contract CouncilFactory {
     GDAv1Forwarder public immutable gdav1Forwarder;
 
     constructor(address _gdav1Forwarder) {
-        require(isContract(address(_gdav1Forwarder)), "GDAv1Forwarder must be a contract");
+        if (!isContract(address(_gdav1Forwarder))) revert GDAv1ForwarderMustBeAContract();
         gdav1Forwarder = GDAv1Forwarder(_gdav1Forwarder);
     }
 

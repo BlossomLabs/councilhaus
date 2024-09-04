@@ -13,6 +13,18 @@ import {NonTransferableToken} from "./NonTransferableToken.sol";
 contract Council is NonTransferableToken, AccessControl {
 
     error PoolCreationFailed();
+    error InvalidMaxAllocations();
+    error InvalidQuorum();
+    error FlowRateMustBePositive();
+    error CouncilMemberAlreadyAdded();
+    error CouncilMemberNotFound();
+    error TooManyAllocations();
+    error GranteesAndAmountsMustBeEqualLength();
+    error GranteeAlreadyAdded();
+    error GranteeNotFound();
+    error AmountMustBeGreaterThanZero();
+    error TotalAllocatedExceedsBalance();
+    error QuorumNotMet();
 
     struct Allocation {
         address[] grantees;
@@ -33,15 +45,15 @@ contract Council is NonTransferableToken, AccessControl {
 
     GDAv1Forwarder public immutable gdav1Forwarder;
 
-    uint256 public constant MAX_ALLOCATIONS_PER_HOLDER = 10;
+    uint8 public constant MAX_ALLOCATIONS_PER_MEMBER = 10;
     bytes32 public constant MEMBER_MANAGER_ROLE = keccak256("MEMBER_MANAGER_ROLE");
     bytes32 public constant GRANTEE_MANAGER_ROLE = keccak256("GRANTEE_MANAGER_ROLE");
 
     ISuperfluidPool public pool;
-    uint256 maxAllocationsPerHolder;
-    mapping(address => bool) internal grantees;
-    mapping(address => uint256) internal _allocatedBy;
-    mapping(address => Allocation) internal _allocations;
+    uint8 public maxAllocationsPerMember;
+    mapping(address => bool) internal grantees; // grantees[grantee] = true if the grantee is a valid grantee, false otherwise
+    mapping(address => uint256) internal _allocatedBy; // _allocatedBy[member] = amount allocated by the member
+    mapping(address => Allocation) internal _allocations; // _allocations[member] = { grantees: [grantee1, grantee2, ...], amounts: [amount1, amount2, ...] }
     uint256 public totalAllocated;
     uint256 public quorum;
     int96 public flowRate;
@@ -56,27 +68,25 @@ contract Council is NonTransferableToken, AccessControl {
         }));
         if (!_success) revert PoolCreationFailed();
         pool = ISuperfluidPool(_pool);
-        maxAllocationsPerHolder = MAX_ALLOCATIONS_PER_HOLDER;
+        maxAllocationsPerMember = MAX_ALLOCATIONS_PER_MEMBER;
         quorum = 0.5e18;
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(MEMBER_MANAGER_ROLE, msg.sender);
         _grantRole(GRANTEE_MANAGER_ROLE, msg.sender);
     }
 
-    function setMaxAllocationsPerHolder(uint256 _maxAllocationsPerHolder) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(_maxAllocationsPerHolder > 0, "Max allocations per holder must be greater than 0");
-        require(_maxAllocationsPerHolder <= MAX_ALLOCATIONS_PER_HOLDER, "Max allocations per holder must be less than or equal to MAX_ALLOCATIONS_PER_HOLDER");
-        maxAllocationsPerHolder = _maxAllocationsPerHolder;
+    function setMaxAllocationsPerMember(uint8 _maxAllocationsPerMember) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (_maxAllocationsPerMember <= 0 || _maxAllocationsPerMember > MAX_ALLOCATIONS_PER_MEMBER) revert InvalidMaxAllocations();
+        maxAllocationsPerMember = _maxAllocationsPerMember;
     }
 
     function setQuorum(uint256 _quorum) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(_quorum > 0, "Quorum must be greater than 0");
-        require(_quorum <= 1e18, "Quorum must be less than or equal to 1e18");
+        if (_quorum <= 0 || _quorum > 1e18) revert InvalidQuorum();
         quorum = _quorum;
     }
 
     function setFlowRate(int96 _flowRate) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(_flowRate > 0, "Flow rate must be greater than 0");
+        if (_flowRate < 0) revert FlowRateMustBePositive();
         flowRate = _flowRate;
         if (isQuorumMet()) {
             executeBudget();
@@ -84,38 +94,43 @@ contract Council is NonTransferableToken, AccessControl {
     }
 
     function addCouncilMember(address _member, uint256 _votingPower) public onlyRole(MEMBER_MANAGER_ROLE) {
+        if (balanceOf(_member) > 0) revert CouncilMemberAlreadyAdded();
+        if (_votingPower == 0) revert AmountMustBeGreaterThanZero();
         _mint(_member, _votingPower);
     }
 
     function removeCouncilMember(address _member) public onlyRole(MEMBER_MANAGER_ROLE) updatePoolUnits(_member) {
+        if (balanceOf(_member) == 0) revert CouncilMemberNotFound();
         _burn(_member, balanceOf(_member));
         delete _allocations[_member];
     }
 
     function addGrantee(address _grantee) public onlyRole(GRANTEE_MANAGER_ROLE) {
+        if (grantees[_grantee]) revert GranteeAlreadyAdded();
         grantees[_grantee] = true;
     }
 
     function removeGrantee(address _grantee) public onlyRole(GRANTEE_MANAGER_ROLE) {
+        if (!grantees[_grantee]) revert GranteeNotFound();
         grantees[_grantee] = false;
         pool.updateMemberUnits(_grantee, 0);
     }
 
     function allocateBudget(Allocation memory _allocation) public updatePoolUnits(msg.sender) {
         uint256 balance = balanceOf(msg.sender);
-        require(balance > 0, "Holder must have a balance greater than 0");
-        require(_allocation.grantees.length <= maxAllocationsPerHolder, "Too many allocations");
-        require(_allocation.grantees.length == _allocation.amounts.length, "Grantees and amounts must be of equal length");
-        uint256 _totalAllocated = 0;
+        if (balance == 0) revert CouncilMemberNotFound();
+        if (_allocation.grantees.length > maxAllocationsPerMember) revert TooManyAllocations();
+        if (_allocation.grantees.length != _allocation.amounts.length) revert GranteesAndAmountsMustBeEqualLength();
+        uint256 _totalAllocatedBySender = 0;
         for (uint256 i = 0; i < _allocation.grantees.length; i++) {
-            require(grantees[_allocation.grantees[i]], "Grantee not found");
-            require(_allocation.amounts[i] > 0, "Amount must be greater than 0");
-            _totalAllocated += _allocation.amounts[i];
+            if (!grantees[_allocation.grantees[i]]) revert GranteeNotFound();
+            if (_allocation.amounts[i] == 0) revert AmountMustBeGreaterThanZero();
+            _totalAllocatedBySender += _allocation.amounts[i];
         }
-        require(totalAllocated <= balance, "Total allocated amount must be less than or equal to the holder's balance");
+        if (_totalAllocatedBySender > balance) revert TotalAllocatedExceedsBalance();
         _allocations[msg.sender] = _allocation;
-        _allocatedBy[msg.sender] = _totalAllocated;
-        totalAllocated += _totalAllocated;
+        _allocatedBy[msg.sender] = _totalAllocatedBySender;
+        totalAllocated += _totalAllocatedBySender;
     }
 
     function allocateBudget(Allocation memory _allocation, bool _executeIfAllAllocated) public {
@@ -126,16 +141,16 @@ contract Council is NonTransferableToken, AccessControl {
     }
 
     function executeBudget() public {
-        require(isQuorumMet(), "Quorum not met");
+        if (!isQuorumMet()) revert QuorumNotMet();
         gdav1Forwarder.distributeFlow(pool.superToken(), msg.sender, address(pool), flowRate, bytes(""));
     }
 
-    function withdraw(address _token, uint256 _amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        IERC20(_token).transfer(msg.sender, _amount);
+    function withdraw(address _token) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        IERC20(_token).transfer(msg.sender, IERC20(_token).balanceOf(address(this)));
     }
 
-    function getAllocation(address _grantee) public view returns (Allocation memory) {
-        return _allocations[_grantee];
+    function getAllocation(address _member) public view returns (Allocation memory) {
+        return _allocations[_member];
     }
 
     function isGrantee(address _grantee) public view returns (bool) {
@@ -143,6 +158,11 @@ contract Council is NonTransferableToken, AccessControl {
     }
 
     function isQuorumMet() public view returns (bool) {
-        return totalAllocated >= quorum * totalSupply() / 1e18;
+        uint256 _totalSupply = totalSupply();
+        return _totalSupply > 0 && totalAllocated >= quorum * _totalSupply / 1e18;
+    }
+
+    function distributionToken() public view returns (address) {
+        return address(pool.superToken());
     }
 }
