@@ -31,6 +31,8 @@ contract Council is NonTransferableToken, AccessControl {
         }
     }
 
+    GDAv1Forwarder public immutable gdav1Forwarder;
+
     uint256 public constant MAX_ALLOCATIONS_PER_HOLDER = 10;
     bytes32 public constant MEMBER_MANAGER_ROLE = keccak256("MEMBER_MANAGER_ROLE");
     bytes32 public constant GRANTEE_MANAGER_ROLE = keccak256("GRANTEE_MANAGER_ROLE");
@@ -40,14 +42,22 @@ contract Council is NonTransferableToken, AccessControl {
     mapping(address => bool) internal grantees;
     mapping(address => uint256) internal _allocatedBy;
     mapping(address => Allocation) internal _allocations;
+    uint256 public totalAllocated;
+    uint256 public quorum;
+    int96 public flowRate;
 
-    constructor(string memory _name, string memory _symbol, address _distributionToken, GDAv1Forwarder gdav1Forwarder)
+    constructor(string memory _name, string memory _symbol, address _distributionToken, GDAv1Forwarder _gdav1Forwarder)
         NonTransferableToken(_name, _symbol)
     {
-        (bool _success, address _pool) = gdav1Forwarder.createPool(_distributionToken, address(this), PoolConfig({transferabilityForUnitsOwner: false, distributionFromAnyAddress: false}));
+        gdav1Forwarder = _gdav1Forwarder;
+        (bool _success, address _pool) = _gdav1Forwarder.createPool(_distributionToken, address(this), PoolConfig({
+            transferabilityForUnitsOwner: false,
+            distributionFromAnyAddress: false
+        }));
         if (!_success) revert PoolCreationFailed();
         pool = ISuperfluidPool(_pool);
         maxAllocationsPerHolder = MAX_ALLOCATIONS_PER_HOLDER;
+        quorum = 0.5e18;
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(MEMBER_MANAGER_ROLE, msg.sender);
         _grantRole(GRANTEE_MANAGER_ROLE, msg.sender);
@@ -57,6 +67,20 @@ contract Council is NonTransferableToken, AccessControl {
         require(_maxAllocationsPerHolder > 0, "Max allocations per holder must be greater than 0");
         require(_maxAllocationsPerHolder <= MAX_ALLOCATIONS_PER_HOLDER, "Max allocations per holder must be less than or equal to MAX_ALLOCATIONS_PER_HOLDER");
         maxAllocationsPerHolder = _maxAllocationsPerHolder;
+    }
+
+    function setQuorum(uint256 _quorum) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(_quorum > 0, "Quorum must be greater than 0");
+        require(_quorum <= 1e18, "Quorum must be less than or equal to 1e18");
+        quorum = _quorum;
+    }
+
+    function setFlowRate(int96 _flowRate) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(_flowRate > 0, "Flow rate must be greater than 0");
+        flowRate = _flowRate;
+        if (isQuorumMet()) {
+            executeBudget();
+        }
     }
 
     function addCouncilMember(address _member, uint256 _votingPower) public onlyRole(MEMBER_MANAGER_ROLE) {
@@ -82,15 +106,28 @@ contract Council is NonTransferableToken, AccessControl {
         require(balance > 0, "Holder must have a balance greater than 0");
         require(_allocation.grantees.length <= maxAllocationsPerHolder, "Too many allocations");
         require(_allocation.grantees.length == _allocation.amounts.length, "Grantees and amounts must be of equal length");
-        uint256 totalAllocated = 0;
+        uint256 _totalAllocated = 0;
         for (uint256 i = 0; i < _allocation.grantees.length; i++) {
             require(grantees[_allocation.grantees[i]], "Grantee not found");
             require(_allocation.amounts[i] > 0, "Amount must be greater than 0");
-            totalAllocated += _allocation.amounts[i];
-            _allocatedBy[msg.sender] += _allocation.amounts[i];
+            _totalAllocated += _allocation.amounts[i];
         }
         require(totalAllocated <= balance, "Total allocated amount must be less than or equal to the holder's balance");
         _allocations[msg.sender] = _allocation;
+        _allocatedBy[msg.sender] = _totalAllocated;
+        totalAllocated += _totalAllocated;
+    }
+
+    function allocateBudget(Allocation memory _allocation, bool _executeIfAllAllocated) public {
+        allocateBudget(_allocation);
+        if (_executeIfAllAllocated && isQuorumMet()) {
+            executeBudget();
+        }
+    }
+
+    function executeBudget() public {
+        require(isQuorumMet(), "Quorum not met");
+        gdav1Forwarder.distributeFlow(pool.superToken(), msg.sender, address(pool), flowRate, bytes(""));
     }
 
     function withdraw(address _token, uint256 _amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -103,5 +140,9 @@ contract Council is NonTransferableToken, AccessControl {
 
     function isGrantee(address _grantee) public view returns (bool) {
         return grantees[_grantee];
+    }
+
+    function isQuorumMet() public view returns (bool) {
+        return totalAllocated >= quorum * totalSupply() / 1e18;
     }
 }

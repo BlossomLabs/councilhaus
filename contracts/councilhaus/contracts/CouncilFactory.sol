@@ -21,6 +21,8 @@ contract CouncilFactory {
         uint256[] firstMintAmount;
         address distributionToken;
         address[] grantees;
+        uint256 quorum;
+        int96 flowRate;
     }
 
     GDAv1Forwarder public immutable gdav1Forwarder;
@@ -40,6 +42,9 @@ contract CouncilFactory {
         for (uint256 i = 0; i < config.grantees.length; i++) {
             council.addGrantee(config.grantees[i]);
         }
+
+        council.setQuorum(config.quorum);
+        council.setFlowRate(config.flowRate);
 
         council.grantRole(council.MEMBER_MANAGER_ROLE(), msg.sender);
         council.grantRole(council.GRANTEE_MANAGER_ROLE(), msg.sender);

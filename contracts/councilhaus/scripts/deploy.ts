@@ -1,5 +1,5 @@
 import { viem, run } from "hardhat";
-import { parseEventLogs } from 'viem'
+import { parseEventLogs, parseUnits } from 'viem'
 
 async function deployAndVerify(contractName: string, args: any[]) {
   const contract = await viem.deployContract(contractName, args);
@@ -45,7 +45,9 @@ async function main() {
         "0x6ea869B6870dd98552B0C7e47dA90702a436358b", // ENS Wayback Machine
         "0xB6989F472Bef8931e6Ca882b1f875539b7D5DA19", // Giveth House
         "0xeafFF6dB1965886348657E79195EB6f1A84657eB" // EVMcrispr
-      ]
+      ],
+      quorum: parseUnits("0.5", 18),
+      flowRate: parseUnits("1", 18) / 24n / 60n / 60n // 1 DAI per day
     }
   ]);
 
