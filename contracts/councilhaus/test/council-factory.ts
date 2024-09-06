@@ -28,8 +28,6 @@ const deploy = async () => {
   };
 };
 
-
-
 describe("CouncilFactory Contract Tests", function () {
   describe("Deployment", function () {
     it("should set the correct GDAv1Forwarder address", async function () {
@@ -44,24 +42,22 @@ describe("CouncilFactory Contract Tests", function () {
   describe("createCouncil", function () {
     it("should create a new council and emit a CouncilCreated event", async function () {
       const { councilFactory, addr1, addr2, councilFromTx } = await loadFixture(deploy);
-      const config =
-        {
-          councilName: "Spacing Guild",
-          councilSymbol: "SPA",
-          firstMintTo: [
-            addr1,
-            addr2
-          ],
-          firstMintAmount: [1000000000000000000000000n, 2000000000000000000000000n],
-          distributionToken: "0x7d342726b69c28d942ad8bfe6ac81b972349d524" as `0x${string}`, // DAIx
-          grantees: [
-            "0x6ea869B6870dd98552B0C7e47dA90702a436358b" as `0x${string}`, // ENS Wayback Machine
-            "0xB6989F472Bef8931e6Ca882b1f875539b7D5DA19" as `0x${string}`, // Giveth House
-            "0xeafFF6dB1965886348657E79195EB6f1A84657eB" as `0x${string}` // EVMcrispr
-          ],
-          quorum: parseUnits("0.5", 18),
-          flowRate: parseUnits("1", 18) / 24n / 60n / 60n // 1 DAI per day
-        };
+      const config = {
+        councilName: "Spacing Guild",
+        councilSymbol: "SPA",
+        councilMembers: [
+          { account: addr1, votingPower: parseUnits("100", 18) },
+          { account: addr2, votingPower: parseUnits("200", 18) }
+        ],
+        grantees: [
+          { name: "ENS Wayback Machine", account: "0x6ea869B6870dd98552B0C7e47dA90702a436358b" as `0x${string}` },
+          { name: "Giveth House", account: "0xB6989F472Bef8931e6Ca882b1f875539b7D5DA19" as `0x${string}` },
+          { name: "EVMcrispr", account: "0xeafFF6dB1965886348657E79195EB6f1A84657eB" as `0x${string}` }
+        ],
+        quorum: parseUnits("0.5", 18),
+        distributionToken: "0x7d342726b69c28d942ad8bfe6ac81b972349d524" as `0x${string}`, // DAIx
+        flowRate: parseUnits("1", 18) / 24n / 60n / 60n // 1 DAI per day
+      };
 
       const hash = await councilFactory.write.createCouncil([config])
     
@@ -69,31 +65,5 @@ describe("CouncilFactory Contract Tests", function () {
       expect(council).to.be.a('string');
       expect(pool).to.be.a('string');
     });
-
-    it('should revert if firstMintTo and firstMintAmount are not the same length', async function () {
-      const { councilFactory, addr1, addr2 } = await loadFixture(deploy);
-      const config =
-        {
-          councilName: "Spacing Guild",
-          councilSymbol: "SPA",
-          firstMintTo: [
-            addr1,
-            addr2
-          ],
-          firstMintAmount: [1000000000000000000000000n],
-          distributionToken: "0x7d342726b69c28d942ad8bfe6ac81b972349d524" as `0x${string}`, // DAIx
-          grantees: [
-            "0x6ea869B6870dd98552B0C7e47dA90702a436358b" as `0x${string}`, // ENS Wayback Machine
-            "0xB6989F472Bef8931e6Ca882b1f875539b7D5DA19" as `0x${string}`, // Giveth House
-            "0xeafFF6dB1965886348657E79195EB6f1A84657eB" as `0x${string}` // EVMcrispr
-          ],
-          quorum: parseUnits("0.5", 18),
-          flowRate: parseUnits("1", 18) / 24n / 60n / 60n // 1 DAI per day
-        };
-
-      expect(councilFactory.write.createCouncil([config])).to.be.rejected;
-    
-    });
   });
-
 });

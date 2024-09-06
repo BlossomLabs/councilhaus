@@ -26,6 +26,17 @@ contract Council is NonTransferableToken, AccessControl {
     error TotalAllocatedExceedsBalance();
     error QuorumNotMet();
 
+    event MaxAllocationsPerMemberSet(uint8 maxAllocationsPerMember);
+    event QuorumSet(uint256 quorum);
+    event FlowRateSet(int96 flowRate);
+    event CouncilMemberAdded(address member, uint256 votingPower);
+    event CouncilMemberRemoved(address member);
+    event GranteeAdded(string name, address grantee);
+    event GranteeRemoved(address grantee);
+    event BudgetAllocated(address member, Allocation allocation);
+    event BudgetExecuted();
+    event Withdrawn(address token, address account, uint256 amount);
+
     struct Allocation {
         address[] grantees;
         uint128[] amounts;
@@ -73,21 +84,27 @@ contract Council is NonTransferableToken, AccessControl {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(MEMBER_MANAGER_ROLE, msg.sender);
         _grantRole(GRANTEE_MANAGER_ROLE, msg.sender);
+
+        emit MaxAllocationsPerMemberSet(MAX_ALLOCATIONS_PER_MEMBER);
+        emit QuorumSet(quorum);
     }
 
     function setMaxAllocationsPerMember(uint8 _maxAllocationsPerMember) public onlyRole(DEFAULT_ADMIN_ROLE) {
         if (_maxAllocationsPerMember <= 0 || _maxAllocationsPerMember > MAX_ALLOCATIONS_PER_MEMBER) revert InvalidMaxAllocations();
         maxAllocationsPerMember = _maxAllocationsPerMember;
+        emit MaxAllocationsPerMemberSet(_maxAllocationsPerMember);
     }
 
     function setQuorum(uint256 _quorum) public onlyRole(DEFAULT_ADMIN_ROLE) {
         if (_quorum <= 0 || _quorum > 1e18) revert InvalidQuorum();
         quorum = _quorum;
+        emit QuorumSet(_quorum);
     }
 
     function setFlowRate(int96 _flowRate) public onlyRole(DEFAULT_ADMIN_ROLE) {
         if (_flowRate < 0) revert FlowRateMustBePositive();
         flowRate = _flowRate;
+        emit FlowRateSet(_flowRate);
         if (isQuorumMet()) {
             executeBudget();
         }
@@ -97,23 +114,27 @@ contract Council is NonTransferableToken, AccessControl {
         if (balanceOf(_member) > 0) revert CouncilMemberAlreadyAdded();
         if (_votingPower == 0) revert AmountMustBeGreaterThanZero();
         _mint(_member, _votingPower);
+        emit CouncilMemberAdded(_member, _votingPower);
     }
 
     function removeCouncilMember(address _member) public onlyRole(MEMBER_MANAGER_ROLE) updatePoolUnits(_member) {
         if (balanceOf(_member) == 0) revert CouncilMemberNotFound();
         _burn(_member, balanceOf(_member));
         delete _allocations[_member];
+        emit CouncilMemberRemoved(_member);
     }
 
-    function addGrantee(address _grantee) public onlyRole(GRANTEE_MANAGER_ROLE) {
+    function addGrantee(string memory _name, address _grantee) public onlyRole(GRANTEE_MANAGER_ROLE) {
         if (grantees[_grantee]) revert GranteeAlreadyAdded();
         grantees[_grantee] = true;
+        emit GranteeAdded(_name, _grantee);
     }
 
     function removeGrantee(address _grantee) public onlyRole(GRANTEE_MANAGER_ROLE) {
         if (!grantees[_grantee]) revert GranteeNotFound();
         grantees[_grantee] = false;
         pool.updateMemberUnits(_grantee, 0);
+        emit GranteeRemoved(_grantee);
     }
 
     function allocateBudget(Allocation memory _allocation) public updatePoolUnits(msg.sender) {
@@ -131,6 +152,7 @@ contract Council is NonTransferableToken, AccessControl {
         _allocations[msg.sender] = _allocation;
         _allocatedBy[msg.sender] = _totalAllocatedBySender;
         totalAllocated += _totalAllocatedBySender;
+        emit BudgetAllocated(msg.sender, _allocation);
     }
 
     function allocateBudget(Allocation memory _allocation, bool _executeIfAllAllocated) public {
@@ -143,10 +165,13 @@ contract Council is NonTransferableToken, AccessControl {
     function executeBudget() public {
         if (!isQuorumMet()) revert QuorumNotMet();
         gdav1Forwarder.distributeFlow(pool.superToken(), msg.sender, address(pool), flowRate, bytes(""));
+        emit BudgetExecuted();
     }
 
     function withdraw(address _token) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        IERC20(_token).transfer(msg.sender, IERC20(_token).balanceOf(address(this)));
+        uint256 balance = IERC20(_token).balanceOf(address(this));
+        IERC20(_token).transfer(msg.sender, balance);
+        emit Withdrawn(_token, msg.sender, balance);
     }
 
     function getAllocation(address _member) public view returns (Allocation memory) {

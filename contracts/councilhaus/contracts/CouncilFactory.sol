@@ -11,18 +11,26 @@ contract CouncilFactory {
 
     event CouncilCreated(address council, address pool);
 
-    error FirstMintToAndAmountLengthMismatch();
     error GDAv1ForwarderMustBeAContract();
+
+    struct CouncilMember {
+        address account;
+        uint256 votingPower;
+    }
+
+    struct Grantee {
+        string name;
+        address account;
+    }
 
     struct DeploymentConfig {
         string councilName;
         string councilSymbol;
-        address[] firstMintTo;
-        uint256[] firstMintAmount;
-        address distributionToken;
-        address[] grantees;
+        CouncilMember[] councilMembers;
+        Grantee[] grantees;
         uint256 quorum;
         int96 flowRate;
+        address distributionToken;
     }
 
     GDAv1Forwarder public immutable gdav1Forwarder;
@@ -33,14 +41,13 @@ contract CouncilFactory {
     }
 
     function createCouncil(DeploymentConfig calldata config) public {
-        if (config.firstMintTo.length != config.firstMintAmount.length) revert FirstMintToAndAmountLengthMismatch();
         Council council = new Council(config.councilName, config.councilSymbol, config.distributionToken, gdav1Forwarder);
 
-        for (uint256 i = 0; i < config.firstMintTo.length; i++) {
-            council.addCouncilMember(config.firstMintTo[i], config.firstMintAmount[i]);
+        for (uint256 i = 0; i < config.councilMembers.length; i++) {
+            council.addCouncilMember(config.councilMembers[i].account, config.councilMembers[i].votingPower);
         }
         for (uint256 i = 0; i < config.grantees.length; i++) {
-            council.addGrantee(config.grantees[i]);
+            council.addGrantee(config.grantees[i].name, config.grantees[i].account);
         }
 
         council.setQuorum(config.quorum);
