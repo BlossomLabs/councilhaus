@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { parseAbiItem, parseEventLogs, PublicClient } from "viem";
+import { type PublicClient, parseAbiItem, parseEventLogs } from "viem";
 
 export async function expectEvent(
   txHash: `0x${string}`,
@@ -15,6 +15,9 @@ export async function expectEvent(
   const event = logs.find((e) => e.eventName === eventSignature.split("(")[0]);
   expect(event, `Event ${eventSignature} was not emitted`).to.exist;
   if (event && typeof expectedArgs !== "undefined") {
-    expect(event.args, `Event ${eventSignature} args do not match`).to.deep.equal(expectedArgs);
+    expect(
+      event.args,
+      `Event ${eventSignature} args do not match`,
+    ).to.deep.equal(expectedArgs);
   }
 }
