@@ -1,81 +1,44 @@
-# Turborepo starter
+# CouncilHaus: A Decentralized Grant Allocation System [![Coverage Status](https://coveralls.io/repos/github/BlossomLabs/councilhaus/badge.svg?branch=master)](https://coveralls.io/github/BlossomLabs/councilhaus?branch=master)
 
-This is an official starter Turborepo.
+## What is Council?
 
-## Using this example
+Council is an innovative system designed to democratize and streamline the process of allocating grants or funds within an organization. It's like a digital roundtable where designated council members can collaboratively decide how to distribute resources to various projects or individuals (called grantees).
 
-Run the following command:
+## Key Features
 
-```sh
-npx create-turbo@latest
+1. **Democratic Decision Making**: Council members are given voting power, allowing them to have a say in how funds are distributed.
+2. **Flexible Allocation**: Members can allocate their voting power across multiple grantees, supporting various projects as they see fit.
+3. **Transparent Process**: All allocations and decisions are recorded, ensuring a clear and auditable trail of fund distribution.
+4. **Managed Access**: The system includes roles for administering members and grantees, maintaining control over who can participate.
+5. **Fair Distribution**: Once allocations are decided, the system automatically handles the distribution of funds to grantees.
+
+## How It Works
+
+1. **Council Formation**: Administrators can add council members, assigning them voting power based on their role or expertise.
+2. **Grantee Registration**: Potential fund recipients (grantees) are added to the system.
+3. **Budget Allocation**: Council members use their voting power to allocate funds to grantees they wish to support.
+4. **Automatic Distribution**: Once allocations are set, the system takes care of distributing the funds according to the council's decisions.
+
+## Why Use Council?
+
+Council brings several benefits to organizations looking to manage grant or fund allocation:
+
+- **Decentralized Decision Making**: It moves away from top-down fund allocation, embracing a more collaborative approach.
+- **Flexibility**: Council members can easily adjust their allocations, responding to changing needs or priorities.
+- **Efficiency**: The automated distribution system reduces administrative overhead.
+- **Transparency**: All decisions are recorded, promoting trust and accountability.
+
+Whether you're a non-profit organization, a research institution, or any entity that needs to manage collective fund allocation, Council provides a modern, fair, and efficient solution to empower your team and streamline your grant-giving process.
+
+## How to run
+
+Install bun from https://bun.sh/
+
+Use `bun` to install dependencies and run the project:
+
+```bash
+bun install
+bun run dev
 ```
 
-## What's inside?
-
-This Turborepo includes the following packages/apps:
-
-### Apps and Packages
-
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-```
-cd my-turborepo
-pnpm build
-```
-
-### Develop
-
-To develop all apps and packages, run the following command:
-
-```
-cd my-turborepo
-pnpm dev
-```
-
-### Remote Caching
-
-Turborepo can use a technique known as [Remote Caching](https://turbo.build/repo/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup), then enter the following commands:
-
-```
-cd my-turborepo
-npx turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-```
-npx turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turbo.build/repo/docs/core-concepts/monorepos/running-tasks)
-- [Caching](https://turbo.build/repo/docs/core-concepts/caching)
-- [Remote Caching](https://turbo.build/repo/docs/core-concepts/remote-caching)
-- [Filtering](https://turbo.build/repo/docs/core-concepts/monorepos/filtering)
-- [Configuration Options](https://turbo.build/repo/docs/reference/configuration)
-- [CLI Usage](https://turbo.build/repo/docs/reference/command-line-reference)
+The smart contracts are in the `contracts` directory, and the frontend is in the `apps` directory.
