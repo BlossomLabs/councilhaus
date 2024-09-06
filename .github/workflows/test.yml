@@ -1,0 +1,20 @@
+name: Test Coveralls
+
+on: ["push", "pull_request"]
+
+jobs:
+  test-contracts:
+    name: test-contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies and run tests
+        run: |
+          cd contracts/councilhaus
+          bun install
+          bun run test:coverage
+
+      - name: Coveralls
+        uses: coverallsapp/github-action@v2
