@@ -11,6 +11,7 @@
     "compile": "hardhat compile",
     "deploy": "hardhat run scripts/deploy.ts --network hardhat",
     "dev": "hardhat node",
-    "test": "hardhat test --network hardhat"
+    "test": "hardhat test --network hardhat",
+    "test:coverage": "SOLIDITY_COVERAGE=true hardhat coverage"
   }
 }

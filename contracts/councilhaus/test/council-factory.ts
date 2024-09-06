@@ -1,7 +1,7 @@
 import { viem } from "hardhat";
 import { assert, expect } from "chai";
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox-viem/network-helpers";
-import { parseUnits, parseEventLogs } from "viem";
+import { parseUnits, parseEventLogs, getAddress } from "viem";
 
 // A deployment function to set up the initial state
 const deploy = async () => {
@@ -9,7 +9,9 @@ const deploy = async () => {
   const publicClient = await viem.getPublicClient()
   const [wallet1, wallet2] = await viem.getWalletClients()
 
-  const councilFactory = await viem.deployContract("CouncilFactory", ["0x6DA13Bde224A05a288748d857b9e7DDEffd1dE08"]);
+  const gdav1Forwarder = await viem.deployContract("GDAv1ForwarderMock")
+
+  const councilFactory = await viem.deployContract("CouncilFactory", [gdav1Forwarder.address]);
 
   const councilFromTx = async (hash: `0x${string}`) => {
     const receipt = await publicClient.getTransactionReceipt({ hash })
@@ -24,15 +26,16 @@ const deploy = async () => {
     wallet2,
     addr1: wallet1.account.address,
     addr2: wallet2.account.address,
-    councilFromTx
+    councilFromTx,
+    gdav1Forwarder
   };
 };
 
 describe("CouncilFactory Contract Tests", function () {
   describe("Deployment", function () {
     it("should set the correct GDAv1Forwarder address", async function () {
-      const { councilFactory } = await loadFixture(deploy);
-      assert.equal(await councilFactory.read.gdav1Forwarder(), "0x6DA13Bde224A05a288748d857b9e7DDEffd1dE08");
+      const { councilFactory, gdav1Forwarder } = await loadFixture(deploy);
+      assert.equal(await councilFactory.read.gdav1Forwarder(), getAddress(gdav1Forwarder.address));
     });
 
     it("should revert if GDAv1Forwarder address is not a contract", async function () {
@@ -54,9 +57,7 @@ describe("CouncilFactory Contract Tests", function () {
           { name: "Giveth House", account: "0xB6989F472Bef8931e6Ca882b1f875539b7D5DA19" as `0x${string}` },
           { name: "EVMcrispr", account: "0xeafFF6dB1965886348657E79195EB6f1A84657eB" as `0x${string}` }
         ],
-        quorum: parseUnits("0.5", 18),
         distributionToken: "0x7d342726b69c28d942ad8bfe6ac81b972349d524" as `0x${string}`, // DAIx
-        flowRate: parseUnits("1", 18) / 24n / 60n / 60n // 1 DAI per day
       };
 
       const hash = await councilFactory.write.createCouncil([config])

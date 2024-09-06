@@ -2,9 +2,6 @@
 // Compatible with OpenZeppelin Contracts ^5.0.0
 pragma solidity ^0.8.20;
 
-import "hardhat/console.sol";
-
-import {GDAv1Forwarder} from "./interfaces/GDAv1Forwarder.sol";
 import {Council} from "./Council.sol";
 
 contract CouncilFactory {
@@ -28,16 +25,14 @@ contract CouncilFactory {
         string councilSymbol;
         CouncilMember[] councilMembers;
         Grantee[] grantees;
-        uint256 quorum;
-        int96 flowRate;
         address distributionToken;
     }
 
-    GDAv1Forwarder public immutable gdav1Forwarder;
+    address public immutable gdav1Forwarder;
 
     constructor(address _gdav1Forwarder) {
-        if (!isContract(address(_gdav1Forwarder))) revert GDAv1ForwarderMustBeAContract();
-        gdav1Forwarder = GDAv1Forwarder(_gdav1Forwarder);
+        if (!isContract(_gdav1Forwarder)) revert GDAv1ForwarderMustBeAContract();
+        gdav1Forwarder = _gdav1Forwarder;
     }
 
     function createCouncil(DeploymentConfig calldata config) public {
@@ -49,9 +44,6 @@ contract CouncilFactory {
         for (uint256 i = 0; i < config.grantees.length; i++) {
             council.addGrantee(config.grantees[i].name, config.grantees[i].account);
         }
-
-        council.setQuorum(config.quorum);
-        council.setFlowRate(config.flowRate);
 
         council.grantRole(council.MEMBER_MANAGER_ROLE(), msg.sender);
         council.grantRole(council.GRANTEE_MANAGER_ROLE(), msg.sender);

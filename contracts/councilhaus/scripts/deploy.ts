@@ -44,9 +44,7 @@ async function main() {
         ["Giveth House", "0xB6989F472Bef8931e6Ca882b1f875539b7D5DA19"],
         ["EVMcrispr", "0xeafFF6dB1965886348657E79195EB6f1A84657eB"]
       ],
-      quorum: parseUnits("0.5", 18),
       distributionToken: "0x7d342726b69c28d942ad8bfe6ac81b972349d524", // DAIx
-      flowRate: parseUnits("1", 18) / 24n / 60n / 60n // 1 DAI per day
     }
   ]);
 

@@ -5,7 +5,6 @@ pragma solidity ^0.8.20;
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-
 import {GDAv1Forwarder, PoolConfig} from "./interfaces/GDAv1Forwarder.sol";
 import {ISuperfluidPool} from "./interfaces/ISuperfluidPool.sol";
 import {NonTransferableToken} from "./NonTransferableToken.sol";
@@ -14,7 +13,6 @@ contract Council is NonTransferableToken, AccessControl {
 
     error PoolCreationFailed();
     error InvalidMaxAllocations();
-    error InvalidQuorum();
     error FlowRateMustBePositive();
     error CouncilMemberAlreadyAdded();
     error CouncilMemberNotFound();
@@ -24,10 +22,8 @@ contract Council is NonTransferableToken, AccessControl {
     error GranteeNotFound();
     error AmountMustBeGreaterThanZero();
     error TotalAllocatedExceedsBalance();
-    error QuorumNotMet();
 
     event MaxAllocationsPerMemberSet(uint8 maxAllocationsPerMember);
-    event QuorumSet(uint256 quorum);
     event FlowRateSet(int96 flowRate);
     event CouncilMemberAdded(address member, uint256 votingPower);
     event CouncilMemberRemoved(address member);
@@ -66,48 +62,29 @@ contract Council is NonTransferableToken, AccessControl {
     mapping(address => uint256) internal _allocatedBy; // _allocatedBy[member] = amount allocated by the member
     mapping(address => Allocation) internal _allocations; // _allocations[member] = { grantees: [grantee1, grantee2, ...], amounts: [amount1, amount2, ...] }
     uint256 public totalAllocated;
-    uint256 public quorum;
-    int96 public flowRate;
 
-    constructor(string memory _name, string memory _symbol, address _distributionToken, GDAv1Forwarder _gdav1Forwarder)
+    constructor(string memory _name, string memory _symbol, address _distributionToken, address _gdav1Forwarder)
         NonTransferableToken(_name, _symbol)
     {
-        gdav1Forwarder = _gdav1Forwarder;
-        (bool _success, address _pool) = _gdav1Forwarder.createPool(_distributionToken, address(this), PoolConfig({
+        gdav1Forwarder = GDAv1Forwarder(_gdav1Forwarder);
+        (bool _success, address _pool) = GDAv1Forwarder(_gdav1Forwarder).createPool(_distributionToken, address(this), PoolConfig({
             transferabilityForUnitsOwner: false,
             distributionFromAnyAddress: false
         }));
         if (!_success) revert PoolCreationFailed();
         pool = ISuperfluidPool(_pool);
         maxAllocationsPerMember = MAX_ALLOCATIONS_PER_MEMBER;
-        quorum = 0.5e18;
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(MEMBER_MANAGER_ROLE, msg.sender);
         _grantRole(GRANTEE_MANAGER_ROLE, msg.sender);
 
         emit MaxAllocationsPerMemberSet(MAX_ALLOCATIONS_PER_MEMBER);
-        emit QuorumSet(quorum);
     }
 
     function setMaxAllocationsPerMember(uint8 _maxAllocationsPerMember) public onlyRole(DEFAULT_ADMIN_ROLE) {
         if (_maxAllocationsPerMember <= 0 || _maxAllocationsPerMember > MAX_ALLOCATIONS_PER_MEMBER) revert InvalidMaxAllocations();
         maxAllocationsPerMember = _maxAllocationsPerMember;
         emit MaxAllocationsPerMemberSet(_maxAllocationsPerMember);
-    }
-
-    function setQuorum(uint256 _quorum) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (_quorum <= 0 || _quorum > 1e18) revert InvalidQuorum();
-        quorum = _quorum;
-        emit QuorumSet(_quorum);
-    }
-
-    function setFlowRate(int96 _flowRate) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (_flowRate < 0) revert FlowRateMustBePositive();
-        flowRate = _flowRate;
-        emit FlowRateSet(_flowRate);
-        if (isQuorumMet()) {
-            executeBudget();
-        }
     }
 
     function addCouncilMember(address _member, uint256 _votingPower) public onlyRole(MEMBER_MANAGER_ROLE) {
@@ -155,19 +132,6 @@ contract Council is NonTransferableToken, AccessControl {
         emit BudgetAllocated(msg.sender, _allocation);
     }
 
-    function allocateBudget(Allocation memory _allocation, bool _executeIfAllAllocated) public {
-        allocateBudget(_allocation);
-        if (_executeIfAllAllocated && isQuorumMet()) {
-            executeBudget();
-        }
-    }
-
-    function executeBudget() public {
-        if (!isQuorumMet()) revert QuorumNotMet();
-        gdav1Forwarder.distributeFlow(pool.superToken(), msg.sender, address(pool), flowRate, bytes(""));
-        emit BudgetExecuted();
-    }
-
     function withdraw(address _token) public onlyRole(DEFAULT_ADMIN_ROLE) {
         uint256 balance = IERC20(_token).balanceOf(address(this));
         IERC20(_token).transfer(msg.sender, balance);
@@ -180,11 +144,6 @@ contract Council is NonTransferableToken, AccessControl {
 
     function isGrantee(address _grantee) public view returns (bool) {
         return grantees[_grantee];
-    }
-
-    function isQuorumMet() public view returns (bool) {
-        uint256 _totalSupply = totalSupply();
-        return _totalSupply > 0 && totalAllocated >= quorum * _totalSupply / 1e18;
     }
 
     function distributionToken() public view returns (address) {

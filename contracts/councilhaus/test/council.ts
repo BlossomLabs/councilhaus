@@ -1,10 +1,9 @@
 import { viem } from "hardhat";
 import { expect } from "chai";
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox-viem/network-helpers";
-import { parseUnits, getAddress, parseAbiItem } from "viem";
+import { parseUnits, getAddress } from "viem";
 import { expectEvent } from "./utils";
 
-const gdav1ForwarderAddress = "0x6DA13Bde224A05a288748d857b9e7DDEffd1dE08";
 const ethxTokenAddress = "0x4ac8bD1bDaE47beeF2D1c6Aa62229509b962Aa0d";
 
 // A deployment function to set up the initial state
@@ -12,11 +11,14 @@ const deploy = async () => {
   const publicClient = await viem.getPublicClient();
   const [wallet1, wallet2] = await viem.getWalletClients();
 
+
+  const gdav1Forwarder = await viem.deployContract("GDAv1ForwarderMock")
+
   const council = await viem.deployContract("Council", [
     "Spacing Guild",
     "SPA",
     ethxTokenAddress,
-    gdav1ForwarderAddress,
+    gdav1Forwarder.address,
   ]);
 
   const pool = await viem.getContractAt("ISuperfluidPool", await council.read.pool());
@@ -29,22 +31,22 @@ const deploy = async () => {
     wallet2,
     addr1: wallet1.account.address,
     addr2: wallet2.account.address,
+    gdav1Forwarder
   };
 };
 
 describe("Council Contract Tests", function () {
   describe("Deployment", function () {
     it("should deploy with the correct initial parameters", async function () {
-      const { council } = await loadFixture(deploy);
+      const { council, gdav1Forwarder } = await loadFixture(deploy);
       expect(await council.read.name()).to.equal("Spacing Guild");
       expect(await council.read.symbol()).to.equal("SPA");
       expect(await council.read.distributionToken()).to.equal(
         ethxTokenAddress,
       );
       expect(await council.read.gdav1Forwarder()).to.equal(
-        gdav1ForwarderAddress,
+        getAddress(gdav1Forwarder.address),
       );
-      expect(await council.read.quorum()).to.equal(500000000000000000n);
       expect(await council.read.maxAllocationsPerMember()).to.equal(10);
     });
   });
@@ -125,10 +127,10 @@ describe("Council Contract Tests", function () {
       await council.write.addCouncilMember([addr1, 100n]);
       await council.write.addGrantee(["Grantee", addr2]);
       await council.write.allocateBudget([{ grantees: [addr2], amounts: [50n] }]);
-      expect(await pool.read.balanceOf([addr2])).to.equal(50n);
+      expect(await pool.read.getUnits([addr2])).to.equal(50n);
       const tx = await council.write.removeCouncilMember([addr1]);
       expect(await council.read.balanceOf([addr1])).to.equal(0n);
-      expect(await pool.read.balanceOf([addr2])).to.equal(0n);
+      expect(await pool.read.getUnits([addr2])).to.equal(0n);
       await expectEvent(tx, publicClient, "CouncilMemberRemoved(address member)", {
         member: getAddress(addr1),
       });
@@ -221,50 +223,18 @@ describe("Council Contract Tests", function () {
     });
   });
 
-  describe("Quorum and Flow Rate Management", function () {
-    it("Should allow the admin to set quorum and flow rate", async function () {
-      const { council, publicClient } = await loadFixture(deploy);
-      const tx = await council.write.setQuorum([parseUnits("0.7", 18)]);
-      expect(await council.read.quorum()).to.equal(parseUnits("0.7", 18));
-      await expectEvent(tx, publicClient, "QuorumSet(uint256 quorum)", {
-        quorum: parseUnits("0.7", 18),
-      });
-
-      const tx2 = await council.write.setFlowRate([10n]);
-      expect(await council.read.flowRate()).to.equal(10n);
-      await expectEvent(tx2, publicClient, "FlowRateSet(int96 flowRate)", {
-        flowRate: 10n,
-      });
-    });
-  });
-
-  describe("Execution and Withdrawal", function () {
-    it("Should execute budget when quorum is met", async function () {
-      const { council, addr1, addr2 } = await loadFixture(deploy);
-      await council.write.addCouncilMember([addr1, 100n]);
-      await council.write.addGrantee(["Grantee", addr2]);
-      const allocation = { grantees: [addr2], amounts: [100n] };
-      await council.write.allocateBudget([allocation]);
-      //   await expect(council.connect(member).executeBudget()).to.emit(gdav1ForwarderMock, 'DistributeFlow');
-    });
-
+  describe("Withdrawal", function () {
     it("Should allow the admin to withdraw tokens", async function () {
       const { council, wallet1, publicClient } = await loadFixture(deploy);
-      const ethxToken = await viem.getContractAt("ERC20", ethxTokenAddress);
-      const tx = await wallet1.sendTransaction({
-        to: ethxTokenAddress,
-        value: parseUnits("0.1", 18),
-        data: "0xcf81464b", // upgradeByETH()
-      });
-      await publicClient.waitForTransactionReceipt({ hash: tx });
-      await ethxToken.write.transfer([council.address, parseUnits("0.1", 18)]);
-      const tx2 = await council.write.withdraw([ethxTokenAddress]);
-      expect(await ethxToken.read.balanceOf([council.address])).to.equal(0n);
+      const token = await viem.deployContract("ERC20Mock", ["Test Token", "TT"]);
+      await token.write.mint([council.address, parseUnits("0.1", 18)]);
+      const tx = await council.write.withdraw([token.address]);
+      expect(await token.read.balanceOf([council.address])).to.equal(0n);
       expect(
-        await ethxToken.read.balanceOf([wallet1.account.address]),
+        await token.read.balanceOf([wallet1.account.address]),
       ).to.equal(parseUnits("0.1", 18));
-      await expectEvent(tx2, publicClient, "Withdrawn(address token, address account, uint256 amount)", {
-        token: getAddress(ethxTokenAddress),
+      await expectEvent(tx, publicClient, "Withdrawn(address token, address account, uint256 amount)", {
+        token: getAddress(token.address),
         account: getAddress(wallet1.account.address),
         amount: parseUnits("0.1", 18),
       });
