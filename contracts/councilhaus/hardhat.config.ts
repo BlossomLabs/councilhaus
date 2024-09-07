@@ -20,18 +20,18 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: {
-      optimism: process.env.BLOCKSCOUT_KEY as string,
+      optimisticEthereum: process.env.ETHERSCAN_API_KEY as string,
     },
-    customChains: [
-      {
-        network: "optimism",
-        chainId: 10,
-        urls: {
-          apiURL: "https://optimism.blockscout.com/api",
-          browserURL: "https://optimism.blockscout.com",
-        },
-      },
-    ],
+    // customChains: [
+    //   {
+    //     network: "optimism",
+    //     chainId: 10,
+    //     urls: {
+    //       apiURL: "https://optimism.blockscout.com/api",
+    //       browserURL: "https://optimism.blockscout.com",
+    //     },
+    //   },
+    // ],
   },
   sourcify: {
     enabled: false,

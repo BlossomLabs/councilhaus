@@ -33,7 +33,7 @@ abstract contract PoolManager {
                 address(this),
                 PoolConfig({
                     transferabilityForUnitsOwner: false,
-                    distributionFromAnyAddress: false
+                    distributionFromAnyAddress: true
                 })
             );
         // Revert if pool creation fails

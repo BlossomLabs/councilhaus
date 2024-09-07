@@ -52,7 +52,7 @@ async function main() {
     },
   ]);
 
-  const receipt = await publicClient.getTransactionReceipt({
+  const receipt = await publicClient.waitForTransactionReceipt({
     hash,
   });
 

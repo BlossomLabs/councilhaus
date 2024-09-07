@@ -9,7 +9,7 @@
   },
   "scripts": {
     "compile": "hardhat compile",
-    "deploy": "hardhat run scripts/deploy.ts --network hardhat",
+    "deploy": "hardhat run scripts/deploy.ts",
     "dev": "hardhat node",
     "test": "hardhat test --network hardhat",
     "test:coverage": "SOLIDITY_COVERAGE=true hardhat coverage"
