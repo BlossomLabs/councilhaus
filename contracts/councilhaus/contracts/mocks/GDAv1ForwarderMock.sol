@@ -11,7 +11,12 @@ contract GDAv1ForwarderMock {
         address admin,
         PoolConfig memory config
     ) external returns (bool success, address pool) {
-        success = true;
-        pool = address(new PoolMock(token, admin, config));
+        if (token == address(0)) {
+            success = false;
+            pool = address(0);
+        } else {
+            success = true;
+            pool = address(new PoolMock(token, admin, config));
+        }
     }
 }

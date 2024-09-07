@@ -1,7 +1,7 @@
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox-viem/network-helpers";
 import { expect } from "chai";
 import { viem } from "hardhat";
-import { getAddress, parseUnits } from "viem";
+import { getAddress, parseUnits, zeroAddress } from "viem";
 import { expectEvent } from "./utils";
 
 const ethxTokenAddress = "0x4ac8bD1bDaE47beeF2D1c6Aa62229509b962Aa0d";
@@ -48,6 +48,17 @@ describe("Council Contract Tests", () => {
         getAddress(gdav1Forwarder.address),
       );
       expect(await council.read.maxAllocationsPerMember()).to.equal(10);
+    });
+    it("should revert if the pool cannot be created", async () => {
+      const { gdav1Forwarder } = await loadFixture(deploy);
+      await expect(
+        viem.deployContract("Council", [
+          "Spacing Guild",
+          "SPA",
+          zeroAddress,
+          gdav1Forwarder.address,
+        ]),
+      ).to.be.rejected;
     });
   });
 
@@ -127,18 +138,11 @@ describe("Council Contract Tests", () => {
       );
     });
 
-    it("Should allow MEMBER_MANAGER_ROLE to remove council members and clear their allocations", async () => {
-      const { council, pool, addr1, addr2, publicClient } =
-        await loadFixture(deploy);
+    it("Should allow MEMBER_MANAGER_ROLE to remove council members", async () => {
+      const { council, addr1, addr2, publicClient } = await loadFixture(deploy);
       await council.write.addCouncilMember([addr1, 100n]);
       await council.write.addGrantee(["Grantee", addr2]);
-      await council.write.allocateBudget([
-        { grantees: [addr2], amounts: [50n] },
-      ]);
-      expect(await pool.read.getUnits([addr2])).to.equal(50n);
       const tx = await council.write.removeCouncilMember([addr1]);
-      expect(await council.read.balanceOf([addr1])).to.equal(0n);
-      expect(await pool.read.getUnits([addr2])).to.equal(0n);
       await expectEvent(
         tx,
         publicClient,
@@ -147,6 +151,30 @@ describe("Council Contract Tests", () => {
           member: getAddress(addr1),
         },
       );
+    });
+
+    it("Should remove a council member allocation when the council member is removed", async () => {
+      const { council, pool, addr1 } = await loadFixture(deploy);
+      await council.write.addCouncilMember([addr1, 100n]);
+      await council.write.addGrantee(["Grantee", addr1]);
+      await council.write.allocateBudget([
+        { accounts: [addr1], amounts: [50n] },
+      ]);
+      expect(await council.read.getAllocation([addr1])).to.be.deep.equal([
+        { accounts: [getAddress(addr1)], amounts: [50n] },
+        50n,
+        100n,
+      ]);
+      expect(await pool.read.getUnits([addr1])).to.equal(50n);
+      expect(await council.read.totalAllocated()).to.equal(50n);
+      await council.write.removeCouncilMember([addr1]);
+      expect(await council.read.getAllocation([addr1])).to.be.deep.equal([
+        { accounts: [], amounts: [] },
+        0n,
+        0n,
+      ]);
+      expect(await pool.read.getUnits([addr1])).to.equal(0n);
+      expect(await council.read.totalAllocated()).to.equal(0n);
     });
 
     it("Should revert if adding a council member that already exists", async () => {
@@ -162,6 +190,67 @@ describe("Council Contract Tests", () => {
       await expect(
         council.write.removeCouncilMember([addr2]),
       ).to.be.rejectedWith("CouncilMemberNotFound");
+    });
+
+    it("Should revert if adding a council member with zero voting power", async () => {
+      const { council, addr2 } = await loadFixture(deploy);
+      await expect(
+        council.write.addCouncilMember([addr2, 0n]),
+      ).to.be.rejectedWith("AmountMustBeGreaterThanZero");
+    });
+
+    it("Should revert if adding or removing a council member from a non-MEMBER_MANAGER_ROLE", async () => {
+      const { council, addr2 } = await loadFixture(deploy);
+      await expect(
+        council.write.addCouncilMember([addr2, 100n], {
+          account: addr2,
+        }),
+      ).to.be.rejectedWith("AccessControlUnauthorizedAccount");
+      await council.write.addCouncilMember([addr2, 100n]);
+      await expect(
+        council.write.removeCouncilMember([addr2], {
+          account: addr2,
+        }),
+      ).to.be.rejectedWith("AccessControlUnauthorizedAccount");
+    });
+  });
+
+  describe("Max Allocations Per Member", () => {
+    it("Should allow the admin to set the max allocations per member", async () => {
+      const { council, publicClient } = await loadFixture(deploy);
+      const tx = await council.write.setMaxAllocationsPerMember([10]);
+      expect(await council.read.maxAllocationsPerMember()).to.equal(10);
+      await expectEvent(
+        tx,
+        publicClient,
+        "MaxAllocationsPerMemberSet(uint8 maxAllocationsPerMember)",
+        {
+          maxAllocationsPerMember: 10,
+        },
+      );
+    });
+
+    it("Should revert if the max allocations per member is set to 0", async () => {
+      const { council } = await loadFixture(deploy);
+      await expect(
+        council.write.setMaxAllocationsPerMember([0]),
+      ).to.be.rejectedWith("InvalidMaxAllocations");
+    });
+
+    it("Should revert if the max allocations per member is set to a value greater than MAX_ALLOCATIONS_PER_MEMBER", async () => {
+      const { council } = await loadFixture(deploy);
+      await expect(
+        council.write.setMaxAllocationsPerMember([100]),
+      ).to.be.rejectedWith("InvalidMaxAllocations");
+    });
+
+    it("Should revert if the max allocations per member is set by a non-admin", async () => {
+      const { council, addr2 } = await loadFixture(deploy);
+      await expect(
+        council.write.setMaxAllocationsPerMember([10], {
+          account: addr2,
+        }),
+      ).to.be.rejectedWith("AccessControlUnauthorizedAccount");
     });
   });
 
@@ -194,6 +283,39 @@ describe("Council Contract Tests", () => {
       });
     });
 
+    it("Should remove a grantee allocation when the grantee is removed", async () => {
+      const { council, pool, addr1, addr2 } = await loadFixture(deploy);
+      await council.write.addCouncilMember([addr1, 100n]);
+      await council.write.addGrantee(["Grantee", addr2]);
+      await council.write.allocateBudget([
+        { accounts: [addr2], amounts: [50n] },
+      ]);
+      await council.write.removeGrantee([addr2]);
+      expect(await council.read.getAllocation([addr1])).to.be.deep.equal([
+        { accounts: [], amounts: [] },
+        0n,
+        100n,
+      ]);
+      expect(await council.read.isGrantee([addr2])).to.be.false;
+      expect(await pool.read.getUnits([addr2])).to.equal(0n);
+      expect(await council.read.totalAllocated()).to.equal(0n);
+    });
+
+    it("Should revert if adding / removing a grantee from a non-GRANTEE_MANAGER_ROLE", async () => {
+      const { council, addr2 } = await loadFixture(deploy);
+      await expect(
+        council.write.addGrantee(["Grantee", addr2], {
+          account: addr2,
+        }),
+      ).to.be.rejectedWith("AccessControlUnauthorizedAccount");
+      await council.write.addGrantee(["Grantee", addr2]);
+      await expect(
+        council.write.removeGrantee([addr2], {
+          account: addr2,
+        }),
+      ).to.be.rejectedWith("AccessControlUnauthorizedAccount");
+    });
+
     it("Should revert if adding a grantee that already exists", async () => {
       const { council, addr2 } = await loadFixture(deploy);
       await council.write.addGrantee(["Grantee", addr2]);
@@ -216,20 +338,87 @@ describe("Council Contract Tests", () => {
       await council.write.addCouncilMember([addr1, 100n]);
       await council.write.addGrantee(["Grantee", addr2]);
 
-      const allocation = { grantees: [addr2], amounts: [50n] };
+      const allocation = { accounts: [addr2], amounts: [50n] };
       const tx = await council.write.allocateBudget([allocation]);
-      const allocationResult = await council.read.getAllocation([addr1]);
-      expect(allocationResult.grantees[0].toLowerCase()).to.equal(addr2);
+      const [allocationResult, totalAllocated, balance] =
+        await council.read.getAllocation([addr1]);
+      expect(allocationResult.accounts[0].toLowerCase()).to.equal(addr2);
       expect(allocationResult.amounts[0]).to.equal(50n);
+      expect(totalAllocated).to.equal(50n);
+      expect(balance).to.equal(100n);
       await expectEvent(
         tx,
         publicClient,
         "BudgetAllocated(address member, (address[],uint128[]) allocation)",
         {
           member: getAddress(addr1),
-          allocation: [allocation.grantees.map(getAddress), allocation.amounts],
+          allocation: [allocation.accounts.map(getAddress), allocation.amounts],
         },
       );
+    });
+
+    it("Should revert if non-council members allocate budget", async () => {
+      const { council, addr2 } = await loadFixture(deploy);
+      const allocation = { accounts: [addr2], amounts: [50n] };
+      await expect(
+        council.write.allocateBudget([allocation], {
+          account: addr2,
+        }),
+      ).to.be.rejectedWith("CouncilMemberNotFound");
+    });
+
+    it("Should revert if allocation exceeds max allocations per member", async () => {
+      const { council, addr1, addr2 } = await loadFixture(deploy);
+      await council.write.addCouncilMember([addr2, 100n]);
+      await council.write.addGrantee(["Grantee", addr1]);
+      await council.write.addGrantee(["Grantee", addr2]);
+      await council.write.setMaxAllocationsPerMember([1]);
+
+      const allocation = { accounts: [addr1, addr2], amounts: [50n, 50n] };
+      await expect(
+        council.write.allocateBudget([allocation], {
+          account: addr2,
+        }),
+      ).to.be.rejectedWith("TooManyAllocations");
+    });
+
+    it("Should revert if arrays are of different lengths", async () => {
+      const { council, addr1, addr2 } = await loadFixture(deploy);
+
+      await council.write.addCouncilMember([addr2, 100n]);
+
+      const allocation = { accounts: [addr1, addr2], amounts: [50n] };
+      await expect(
+        council.write.allocateBudget([allocation], {
+          account: addr2,
+        }),
+      ).to.be.rejectedWith("ArraysLengthMismatch");
+    });
+
+    it("Should revert if non-grantees are allocated", async () => {
+      const { council, addr1, addr2 } = await loadFixture(deploy);
+      await council.write.addCouncilMember([addr2, 100n]);
+      await council.write.addGrantee(["Grantee", addr1]);
+
+      const allocation = { accounts: [addr1, addr2], amounts: [50n, 50n] };
+      await expect(
+        council.write.allocateBudget([allocation], {
+          account: addr2,
+        }),
+      ).to.be.rejectedWith("GranteeNotFound");
+    });
+
+    it("Should revert if zero is allocated to a grantee", async () => {
+      const { council, addr2 } = await loadFixture(deploy);
+      await council.write.addCouncilMember([addr2, 100n]);
+      await council.write.addGrantee(["Grantee", addr2]);
+
+      const allocation = { accounts: [addr2], amounts: [0n] };
+      await expect(
+        council.write.allocateBudget([allocation], {
+          account: addr2,
+        }),
+      ).to.be.rejectedWith("AmountMustBeGreaterThanZero");
     });
 
     it("Should revert if allocation exceeds voting power", async () => {
@@ -237,7 +426,7 @@ describe("Council Contract Tests", () => {
       await council.write.addCouncilMember([addr2, 100n]);
       await council.write.addGrantee(["Grantee", addr2]);
 
-      const allocation = { grantees: [addr2], amounts: [150n] };
+      const allocation = { accounts: [addr2], amounts: [150n] };
       await expect(
         council.write.allocateBudget([allocation], {
           account: addr2,
@@ -247,13 +436,17 @@ describe("Council Contract Tests", () => {
   });
 
   describe("Withdrawal", () => {
-    it("Should allow the admin to withdraw tokens", async () => {
-      const { council, wallet1, publicClient } = await loadFixture(deploy);
+    async function mintToken(councilAddr: `0x${string}`) {
       const token = await viem.deployContract("ERC20Mock", [
         "Test Token",
         "TT",
       ]);
-      await token.write.mint([council.address, parseUnits("0.1", 18)]);
+      await token.write.mint([councilAddr, parseUnits("0.1", 18)]);
+      return token;
+    }
+    it("Should allow the admin to withdraw tokens", async () => {
+      const { council, wallet1, publicClient } = await loadFixture(deploy);
+      const token = await mintToken(council.address);
       const tx = await council.write.withdraw([token.address]);
       expect(await token.read.balanceOf([council.address])).to.equal(0n);
       expect(await token.read.balanceOf([wallet1.account.address])).to.equal(
@@ -269,6 +462,14 @@ describe("Council Contract Tests", () => {
           amount: parseUnits("0.1", 18),
         },
       );
+    });
+
+    it("Should revert if withdrawing tokens from a non-admin", async () => {
+      const { council, addr2 } = await loadFixture(deploy);
+      const token = await mintToken(council.address);
+      await expect(
+        council.write.withdraw([token.address], { account: addr2 }),
+      ).to.be.rejectedWith("AccessControlUnauthorizedAccount");
     });
   });
 });

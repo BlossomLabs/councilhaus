@@ -5,6 +5,7 @@
     "build": "turbo build",
     "dev": "turbo dev",
     "test": "turbo test",
+    "test:coverage": "turbo test:coverage",
     "format-and-lint": "biome check .",
     "format-and-lint:fix": "biome check . --write"
   },

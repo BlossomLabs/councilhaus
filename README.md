@@ -1,4 +1,4 @@
-# CouncilHaus: A Decentralized Grant Allocation System [![Coverage Status](https://coveralls.io/repos/github/BlossomLabs/councilhaus/badge.svg?branch=master)](https://coveralls.io/github/BlossomLabs/councilhaus?branch=master)
+# CouncilHaus: A Decentralized Grant Allocation System [![Coverage Status](https://coveralls.io/repos/github/BlossomLabs/councilhaus/badge.svg?branch=master&dummy=unused)](https://coveralls.io/github/BlossomLabs/councilhaus?branch=master)
 
 ## What is Council?
 
