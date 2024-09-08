@@ -5,14 +5,19 @@
       {
         "name": "next"
       }
-    ]
+    ],
+    "paths": {
+      "~/*": ["./*"]
+    }
   },
   "include": [
     "next-env.d.ts",
     "next.config.mjs",
+    "postcss.config.mjs",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    "build/types/**/*.ts"
   ],
   "exclude": ["node_modules"]
 }
