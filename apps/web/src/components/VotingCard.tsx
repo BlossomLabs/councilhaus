@@ -10,12 +10,15 @@ import {
 } from "@repo/ui/components/ui/card";
 import { Input } from "@repo/ui/components/ui/input";
 import React, { useState } from "react";
+import { useAccount } from "wagmi";
 
 const VotingCard = ({
   className,
   projects,
   maxVotedProjects = 3,
 }: { className: string; projects: string[]; maxVotedProjects?: number }) => {
+  const { address } = useAccount();
+
   const [votes, setVotes] = useState<{ [key: string]: number }>(
     Object.fromEntries(projects.map((project) => [project, 0])),
   );
@@ -56,7 +59,7 @@ const VotingCard = ({
                   <Button
                     disabled={voteCount <= 0}
                     onClick={() => handleVote(project, voteCount - 1)}
-                    className="bg-gray-700 w-8 py-1 text-white rounded-r-none"
+                    className="bg-gray-700 w-8 py-1 text-white hover:bg-gray-500 rounded-r-none"
                   >
                     -
                   </Button>
@@ -74,7 +77,7 @@ const VotingCard = ({
                       !votes[project as keyof typeof votes]
                     }
                     onClick={() => handleVote(project, voteCount + 1)}
-                    className="bg-gray-700 w-8 py-1 text-white rounded-l-none"
+                    className="bg-gray-700 w-8 py-1 text-white hover:bg-gray-500 rounded-l-none"
                   >
                     +
                   </Button>
@@ -92,10 +95,10 @@ const VotingCard = ({
       </CardContent>
       <CardFooter>
         <Button
-          disabled={votedProjects.length < 1}
+          disabled={votedProjects.length < 1 || !address}
           className="w-full py-2 rounded-lg mt-4 font-bold"
         >
-          Vote
+          {address ? "Vote" : "Connect Wallet"}
         </Button>
       </CardFooter>
     </Card>
