@@ -8,10 +8,12 @@
     "test:coverage": "turbo test:coverage",
     "format-and-lint": "biome check .",
     "format-and-lint:fix": "biome check . --write",
-    "ui": "bun run --cwd packages/ui ui"
+    "ui": "bun run --cwd packages/ui ui",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@biomejs/biome": "1.8.3",
+    "husky": "^9.1.5",
     "prettier": "^3.2.5",
     "turbo": "^2.1.1",
     "typescript": "^5.4.5"

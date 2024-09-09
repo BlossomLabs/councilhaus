@@ -10,7 +10,11 @@ export default async function Page() {
   return (
     <main>
       <h1 className="text-4xl font-bold mb-4 text-accent">Frontier Guild</h1>
-      <VotingCard className="max-w-lg mx-auto" projects={projects} maxVotedProjects={3} />
+      <VotingCard
+        className="max-w-lg mx-auto"
+        projects={projects}
+        maxVotedProjects={3}
+      />
     </main>
   );
 }
