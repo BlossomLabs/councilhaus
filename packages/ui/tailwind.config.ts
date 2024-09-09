@@ -21,6 +21,9 @@ const config = {
       },
     },
     extend: {
+      fontFamily: {
+        newsreader: ["var(--font-newsreader)", "serif"],
+      },
       colors: {
         border: colors.yellow[500],
         input: colors.gray[800],

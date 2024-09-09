@@ -4,7 +4,11 @@ import { Newsreader } from "next/font/google";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 
-const newsreader = Newsreader({ subsets: ["latin"] });
+const newsreader = Newsreader({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-newsreader",
+});
 
 export const metadata: Metadata = {
   title: "CouncilHaus",
