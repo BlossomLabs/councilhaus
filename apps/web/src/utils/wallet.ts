@@ -1,4 +1,5 @@
 "use client";
+
 import "@rainbow-me/rainbowkit/styles.css";
 import { getDefaultConfig } from "@rainbow-me/rainbowkit";
 import { createPublicClient } from "viem";
@@ -14,7 +15,9 @@ if (!WALLETCONNECT_PROJECT_ID) {
   );
 }
 
-export const WALLETCONNECT_CONFIG = getDefaultConfig({
+type RainbowKitConfig = ReturnType<typeof getDefaultConfig>;
+
+export const WALLETCONNECT_CONFIG: RainbowKitConfig = getDefaultConfig({
   appName: SITE_NAME,
   projectId: WALLETCONNECT_PROJECT_ID || "dummy",
   chains: [optimism],

@@ -47,7 +47,8 @@ const VotingCard = ({
         ) : (
           <>
             <h4 className="text-xl mb-6 text-accent">
-              Cast Your Vote ({votedProjects.length} / {maxVotedProjects})
+              Cast Your Vote ({votedProjects.length} / {maxVotedProjects}{" "}
+              projects)
             </h4>
             {Object.entries(votes).map(([project, voteCount]) => (
               <div
@@ -98,7 +99,7 @@ const VotingCard = ({
           disabled={votedProjects.length < 1 || !address}
           className="w-full py-2 rounded-lg mt-4 font-bold"
         >
-          {address ? "Vote" : "Connect Wallet"}
+          {address ? "Vote" : "Wallet not connected"}
         </Button>
       </CardFooter>
     </Card>
