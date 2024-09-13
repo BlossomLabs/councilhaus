@@ -2,7 +2,7 @@ import { loadFixture } from "@nomicfoundation/hardhat-toolbox-viem/network-helpe
 import { expect } from "chai";
 import { viem } from "hardhat";
 import { getAddress, parseUnits, zeroAddress } from "viem";
-import { expectEvent } from "./utils";
+import { expectEvent } from "../utils";
 
 const ethxTokenAddress = "0x4ac8bD1bDaE47beeF2D1c6Aa62229509b962Aa0d";
 
@@ -62,7 +62,7 @@ describe("Council Contract Tests", () => {
     });
   });
 
-  describe("Non-Transferable Token Tests", () => {
+  describe("Non-Transferable Token Tests with zero decimals", () => {
     it("should revert on token transfer", async () => {
       const { council, addr1, addr2 } = await loadFixture(deploy);
       await council.write.addCouncilMember([addr1, 100n]);
@@ -88,6 +88,11 @@ describe("Council Contract Tests", () => {
       await expect(
         council.write.approve([addr2, 50n], { account: addr1 }),
       ).to.be.rejectedWith("CantApproveToken");
+    });
+
+    it("should return the correct decimals", async () => {
+      const { council } = await loadFixture(deploy);
+      expect(await council.read.decimals()).to.equal(0);
     });
   });
 
@@ -197,6 +202,13 @@ describe("Council Contract Tests", () => {
       await expect(
         council.write.addCouncilMember([addr2, 0n]),
       ).to.be.rejectedWith("AmountMustBeGreaterThanZero");
+    });
+
+    it("Should revert if adding a council member with a voting power greater than 1M", async () => {
+      const { council, addr2 } = await loadFixture(deploy);
+      await expect(
+        council.write.addCouncilMember([addr2, 1000001n]),
+      ).to.be.rejectedWith("VotingPowerTooHigh");
     });
 
     it("Should revert if adding or removing a council member from a non-MEMBER_MANAGER_ROLE", async () => {

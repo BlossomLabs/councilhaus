@@ -33,6 +33,7 @@ contract Council is NonTransferableToken, AccessControl, PoolManager {
     error GranteeNotFound();
     error AmountMustBeGreaterThanZero();
     error TotalAllocatedExceedsBalance();
+    error VotingPowerTooHigh();
 
     // Event definitions
     event MaxAllocationsPerMemberSet(uint8 maxAllocationsPerMember);
@@ -105,6 +106,7 @@ contract Council is NonTransferableToken, AccessControl, PoolManager {
     ) public onlyRole(MEMBER_MANAGER_ROLE) {
         if (balanceOf(_member) > 0) revert CouncilMemberAlreadyAdded();
         if (_votingPower == 0) revert AmountMustBeGreaterThanZero();
+        if (_votingPower > 1e6) revert VotingPowerTooHigh();
         _mint(_member, _votingPower);
         emit CouncilMemberAdded(_member, _votingPower);
     }
@@ -183,6 +185,10 @@ contract Council is NonTransferableToken, AccessControl, PoolManager {
         uint256 balance = IERC20(_token).balanceOf(address(this));
         IERC20(_token).transfer(msg.sender, balance);
         emit Withdrawn(_token, msg.sender, balance);
+    }
+
+    function decimals() public pure override returns (uint8) {
+        return 0;
     }
 
     /**

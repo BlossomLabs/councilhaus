@@ -61,8 +61,8 @@ describe("CouncilFactory Contract Tests", () => {
         councilName: "Spacing Guild",
         councilSymbol: "SPA",
         councilMembers: [
-          { account: addr1, votingPower: parseUnits("100", 18) },
-          { account: addr2, votingPower: parseUnits("200", 18) },
+          { account: addr1, votingPower: 500000n },
+          { account: addr2, votingPower: 1000000n },
         ],
         grantees: [
           {
