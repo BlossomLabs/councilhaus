@@ -30,7 +30,6 @@ contract Council is NonTransferableToken, AccessControl, PoolManager {
     error TooManyAllocations();
     error ArraysLengthMismatch();
     error GranteeAlreadyAdded();
-    error GranteeNotFound();
     error AmountMustBeGreaterThanZero();
     error TotalAllocatedExceedsBalance();
     error VotingPowerTooHigh();
@@ -148,7 +147,6 @@ contract Council is NonTransferableToken, AccessControl, PoolManager {
     function removeGrantee(
         address _grantee
     ) public onlyRole(GRANTEE_MANAGER_ROLE) {
-        if (!isGrantee(_grantee)) revert GranteeNotFound();
         _removeGrantee(_grantee);
         emit GranteeRemoved(_grantee);
     }
@@ -166,7 +164,6 @@ contract Council is NonTransferableToken, AccessControl, PoolManager {
             revert ArraysLengthMismatch();
         uint256 _totalAllocatedBySender = 0;
         for (uint256 i = 0; i < _allocation.accounts.length; i++) {
-            if (!isGrantee(_allocation.accounts[i])) revert GranteeNotFound();
             if (_allocation.amounts[i] == 0)
                 revert AmountMustBeGreaterThanZero();
             _totalAllocatedBySender += _allocation.amounts[i];

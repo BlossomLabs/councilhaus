@@ -10,14 +10,25 @@ import {Allocation} from "./Council.sol";
 abstract contract PoolManager {
     // Custom error for when pool creation fails
     error PoolCreationFailed();
+    error GranteeNotFound();
 
-    // Mapping to keep track of valid grantees
-    // @dev grantees[grantee] = true if the grantee is a valid grantee, false otherwise
-    mapping(address => bool) private grantees;
+    // Grantee counter for unique IDs
+    uint256 private granteeCounter;
+
+    // Mapping from grantee address to grantee ID
+    mapping(address => uint256) private granteeIds;
+
+    // Mapping from grantee ID to grantee address
+    mapping(uint256 => address) private granteeAddresses;
 
     // Mapping to store allocations for each member
-    // @dev _allocations[member] = { accounts: [grantee1, grantee2, ...], amounts: [amount1, amount2, ...] }
-    mapping(address => Allocation) private _allocations;
+    // Internal allocations use grantee IDs instead of addresses
+    struct InternalAllocation {
+        uint256[] granteeIds;
+        uint128[] amounts;
+    }
+
+    mapping(address => InternalAllocation) private _internalAllocations;
 
     // Instance of the Superfluid Pool
     ISuperfluidPool public immutable pool;
@@ -45,13 +56,18 @@ abstract contract PoolManager {
     // @dev function to add a new grantee
     // @param _grantee The address of the grantee to be added
     function _addGrantee(address _grantee) internal {
-        grantees[_grantee] = true;
+        uint256 granteeId = ++granteeCounter;
+        granteeAddresses[granteeId] = _grantee;
+        granteeIds[_grantee] = granteeId;
     }
 
     // @dev function to remove a grantee
     // @param _grantee The address of the grantee to be removed
     function _removeGrantee(address _grantee) internal {
-        grantees[_grantee] = false;
+        uint256 granteeId = granteeIds[_grantee];
+        if (granteeId == 0) revert GranteeNotFound();
+        delete granteeAddresses[granteeId];
+        delete granteeIds[_grantee];
         // Delete grantee's units in the pool
         pool.updateMemberUnits(_grantee, 0);
     }
@@ -64,25 +80,27 @@ abstract contract PoolManager {
     function _getAllocation(
         address _member
     ) internal view returns (Allocation memory, uint256) {
-        Allocation memory allocation = _allocations[_member];
+        InternalAllocation storage allocation = _internalAllocations[_member];
         // Count valid grantees
-        uint256 granteeCount = 0;
-        for (uint256 i = 0; i < allocation.accounts.length; i++) {
-            if (isGrantee(allocation.accounts[i])) {
-                granteeCount++;
+        uint256 count = 0;
+        for (uint256 i = 0; i < allocation.granteeIds.length; i++) {
+            address granteeAddress = granteeAddresses[allocation.granteeIds[i]];
+            if (isGrantee(granteeAddress)) {
+                count++;
             }
         }
 
         // Create arrays of the correct size
-        address[] memory granteesCopy = new address[](granteeCount);
-        uint128[] memory amountsCopy = new uint128[](granteeCount);
+        address[] memory granteesCopy = new address[](count);
+        uint128[] memory amountsCopy = new uint128[](count);
 
         // Fill the arrays with valid grantees and amounts
         uint256 index = 0;
         uint256 sum = 0;
-        for (uint256 i = 0; i < allocation.accounts.length; i++) {
-            if (isGrantee(allocation.accounts[i])) {
-                granteesCopy[index] = allocation.accounts[i];
+        for (uint256 i = 0; i < allocation.granteeIds.length; i++) {
+            address granteeAddress = granteeAddresses[allocation.granteeIds[i]];
+            if (isGrantee(granteeAddress)) {
+                granteesCopy[index] = granteeAddress;
                 amountsCopy[index] = allocation.amounts[i];
                 index++;
                 sum += allocation.amounts[i];
@@ -98,22 +116,34 @@ abstract contract PoolManager {
         address _member,
         Allocation memory _newAllocation
     ) internal {
-        Allocation memory _allocation = _allocations[_member];
-        // Remove old allocations from the pool
-        for (uint256 i = 0; i < _allocation.accounts.length; i++) {
+        // First, remove old allocations from the pool
+        InternalAllocation storage _allocation = _internalAllocations[_member];
+        for (uint256 i = 0; i < _allocation.granteeIds.length; i++) {
+            address granteeAddress = granteeAddresses[_allocation.granteeIds[i]];
             pool.updateMemberUnits(
-                _allocation.accounts[i],
-                pool.getUnits(_allocation.accounts[i]) - _allocation.amounts[i]
+                granteeAddress,
+                pool.getUnits(granteeAddress) - _allocation.amounts[i]
             );
         }
-        // Set the new allocation
-        _allocations[_member] = _newAllocation;
-        _allocation = _newAllocation;
-        // Add new allocations to the pool
-        for (uint256 i = 0; i < _allocation.accounts.length; i++) {
+        // Map new allocation addresses to grantee IDs
+        uint256[] memory granteeIdsArray = new uint256[](_newAllocation.accounts.length);
+        for (uint256 i = 0; i < _newAllocation.accounts.length; i++) {
+            address granteeAddress = _newAllocation.accounts[i];
+            uint256 granteeId = granteeIds[granteeAddress];
+            if (granteeId == 0) revert GranteeNotFound();
+            granteeIdsArray[i] = granteeId;
+        }
+        // Set the new internal allocation
+        _internalAllocations[_member] = InternalAllocation({
+            granteeIds: granteeIdsArray,
+            amounts: _newAllocation.amounts
+        });
+        // Update the pool units with the new allocation
+        for (uint256 i = 0; i < granteeIdsArray.length; i++) {
+            address granteeAddress = granteeAddresses[granteeIdsArray[i]];
             pool.updateMemberUnits(
-                _allocation.accounts[i],
-                pool.getUnits(_allocation.accounts[i]) + _allocation.amounts[i]
+                granteeAddress,
+                pool.getUnits(granteeAddress) + _newAllocation.amounts[i]
             );
         }
     }
@@ -128,7 +158,7 @@ abstract contract PoolManager {
     // @param _grantee The address to check
     // @return True if the address is a valid grantee, false otherwise
     function isGrantee(address _grantee) public view returns (bool) {
-        return grantees[_grantee];
+        return granteeIds[_grantee] != 0;
     }
 
     // @notice Distribution token address

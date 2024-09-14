@@ -1,7 +1,7 @@
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox-viem/network-helpers";
 import { assert, expect } from "chai";
 import hre, { viem } from "hardhat";
-import { getAddress, parseEventLogs, parseUnits } from "viem";
+import { getAddress, parseEventLogs } from "viem";
 
 // A deployment function to set up the initial state
 const deploy = async () => {

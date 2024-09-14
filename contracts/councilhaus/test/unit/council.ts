@@ -313,6 +313,41 @@ describe("Council Contract Tests", () => {
       expect(await council.read.totalAllocated()).to.equal(0n);
     });
 
+    it("Should not preserve a previous allocation when a grantee is removed", async () => {
+      const { council, addr1, addr2 } = await loadFixture(deploy);
+      await council.write.addCouncilMember([addr1, 100n]);
+      await council.write.addGrantee(["Grantee", addr1]);
+      await council.write.addGrantee(["Grantee", addr2]);
+      await council.write.allocateBudget([
+        { accounts: [addr1, addr2], amounts: [50n, 50n] },
+      ]);
+
+      expect(await council.read.getAllocation([addr1])).to.be.deep.equal([
+        {
+          accounts: [getAddress(addr1), getAddress(addr2)],
+          amounts: [50n, 50n],
+        },
+        100n,
+        100n,
+      ]);
+
+      await council.write.removeGrantee([addr2]);
+
+      expect(await council.read.getAllocation([addr1])).to.be.deep.equal([
+        { accounts: [getAddress(addr1)], amounts: [50n] },
+        50n,
+        100n,
+      ]);
+
+      await council.write.addGrantee(["Grantee", addr2]);
+
+      expect(await council.read.getAllocation([addr1])).to.be.deep.equal([
+        { accounts: [getAddress(addr1)], amounts: [50n] },
+        50n,
+        100n,
+      ]);
+    });
+
     it("Should revert if adding / removing a grantee from a non-GRANTEE_MANAGER_ROLE", async () => {
       const { council, addr2 } = await loadFixture(deploy);
       await expect(

@@ -1,5 +1,5 @@
 import { viem } from "hardhat";
-import { parseEventLogs, parseUnits } from "viem";
+import { parseEventLogs } from "viem";
 
 async function main() {
   const publicClient = await viem.getPublicClient();
@@ -16,15 +16,15 @@ async function main() {
       councilMembers: [
         {
           account: "0x0992b9c6eA15A09418fF454a436705aE29877D88",
-          votingPower: parseUnits("100", 18),
+          votingPower: 100n,
         },
         {
           account: "0xf632ce27ea72dea30d30c1a9700b6b3bceaa05cf",
-          votingPower: parseUnits("100", 18),
+          votingPower: 100n,
         },
         {
           account: "0xbaD8bcc9Eb5749829cF12189fDD5c1230D6C85e8",
-          votingPower: parseUnits("100", 18),
+          votingPower: 100n,
         },
       ],
       grantees: [
