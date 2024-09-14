@@ -119,14 +119,20 @@ abstract contract PoolManager {
         // First, remove old allocations from the pool
         InternalAllocation storage _allocation = _internalAllocations[_member];
         for (uint256 i = 0; i < _allocation.granteeIds.length; i++) {
-            address granteeAddress = granteeAddresses[_allocation.granteeIds[i]];
-            pool.updateMemberUnits(
-                granteeAddress,
-                pool.getUnits(granteeAddress) - _allocation.amounts[i]
-            );
+            if (granteeAddresses[_allocation.granteeIds[i]] != address(0)) {
+                address granteeAddress = granteeAddresses[
+                    _allocation.granteeIds[i]
+                ];
+                pool.updateMemberUnits(
+                    granteeAddress,
+                    pool.getUnits(granteeAddress) - _allocation.amounts[i]
+                );
+            }
         }
         // Map new allocation addresses to grantee IDs
-        uint256[] memory granteeIdsArray = new uint256[](_newAllocation.accounts.length);
+        uint256[] memory granteeIdsArray = new uint256[](
+            _newAllocation.accounts.length
+        );
         for (uint256 i = 0; i < _newAllocation.accounts.length; i++) {
             address granteeAddress = _newAllocation.accounts[i];
             uint256 granteeId = granteeIds[granteeAddress];
