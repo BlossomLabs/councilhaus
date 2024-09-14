@@ -6,6 +6,8 @@ jobs:
   test-contracts:
     name: test-contracts
     runs-on: ubuntu-latest
+    env:
+      ALCHEMY_KEY: ${{ secrets.ALCHEMY_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
@@ -16,5 +18,8 @@ jobs:
           bun install
           bun run test:coverage
 
-      - name: Coveralls
+      - name: Upload coverage to Coveralls
         uses: coverallsapp/github-action@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}  # Ensure this is set
+          path-to-lcov: ./contracts/councilhaus/coverage/lcov.info # Adjust this path as needed
