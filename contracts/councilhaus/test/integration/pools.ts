@@ -1,7 +1,16 @@
-import { loadFixture } from "@nomicfoundation/hardhat-toolbox-viem/network-helpers";
+import {
+  loadFixture,
+  mine,
+} from "@nomicfoundation/hardhat-toolbox-viem/network-helpers";
 import { expect } from "chai";
 import hre, { viem } from "hardhat";
-import { parseEventLogs } from "viem";
+import { parseEventLogs, parseUnits } from "viem";
+
+// A helper function to compare two bigints with an absolute difference
+// Usage: expectAbsDiff(totalFlowRate, flowRate).to.be.lte(10n);
+const expectAbsDiff = (a: bigint, b: bigint, message?: string) => {
+  return expect(Number(a > b ? a - b : b - a), message);
+};
 
 // A deployment function to set up the initial state
 const deploy = async () => {
@@ -49,7 +58,7 @@ const deploy = async () => {
       },
     ],
     distributionToken:
-      "0x7d342726b69c28d942ad8bfe6ac81b972349d524" as `0x${string}`, // DAIx
+      "0x4ac8bD1bDaE47beeF2D1c6Aa62229509b962Aa0d" as `0x${string}`, // ETHx
   };
 
   // Create a new council
@@ -62,11 +71,25 @@ const deploy = async () => {
 
   // Get the deployed Pool contract
   const poolContract = await viem.getContractAt("ISuperfluidPool", pool);
+  const gdav1ForwarderContract = await viem.getContractAt(
+    "GDAv1Forwarder",
+    gdav1ForwarderAddress,
+  );
+
+  // Mint and transfer ETHx
+  const ethxToken = await viem.getContractAt("ERC20", config.distributionToken);
+  const tx = await wallet1.sendTransaction({
+    to: config.distributionToken,
+    value: parseUnits("100", 18),
+    data: "0xcf81464b", // upgradeByETH()
+  });
+  await publicClient.waitForTransactionReceipt({ hash: tx });
 
   return {
     councilFactory,
     councilContract,
     poolContract,
+    gdav1ForwarderContract,
     publicClient,
     wallet1,
     wallet2,
@@ -74,6 +97,7 @@ const deploy = async () => {
     councilFromTx,
     gdav1ForwarderAddress,
     config,
+    ethxToken,
   };
 };
 
@@ -97,25 +121,25 @@ describe("Integration Tests: Pools", () => {
   });
 
   describe("Council and Pool Interactions", () => {
-    it("should allow council members to allocate units to grantees", async () => {
-      const { councilContract, poolContract, config, wallet1, wallet2 } =
-        await loadFixture(deploy);
+    it("should allow council members to allocate units to grantees and distribute flows", async () => {
+      const {
+        councilContract,
+        poolContract,
+        gdav1ForwarderContract,
+        config,
+        wallet1,
+        wallet2,
+      } = await loadFixture(deploy);
 
       // Council member 1 allocates 30 units to grantee 1 and 20 units to grantee 2
       const allocation1 = {
-        accounts: [
-          config.grantees[0].account,
-          config.grantees[1].account,
-        ] as `0x${string}`[],
+        accounts: [config.grantees[0].account, config.grantees[1].account],
         amounts: [30n, 20n],
       };
 
       // Council member 2 allocates 50 units to grantee 2 and 50 units to grantee 3
       const allocation2 = {
-        accounts: [
-          config.grantees[1].account,
-          config.grantees[2].account,
-        ] as `0x${string}`[],
+        accounts: [config.grantees[1].account, config.grantees[2].account],
         amounts: [50n, 50n],
       };
 
@@ -130,9 +154,8 @@ describe("Integration Tests: Pools", () => {
       });
 
       // Check the total allocated units in the pool
-      const totalUnits = await poolContract.read.getTotalUnits();
-      expect(totalUnits).to.equal(200n);
-
+      const _totalUnits = await poolContract.read.getTotalUnits();
+      expect(_totalUnits).to.equal(150n);
       // Check units per grantee
       const unitsGrantee1 = await poolContract.read.getUnits([
         config.grantees[0].account,
@@ -147,13 +170,59 @@ describe("Integration Tests: Pools", () => {
       expect(unitsGrantee1).to.equal(30n);
       expect(unitsGrantee2).to.equal(70n); // 20 from member1 + 50 from member2
       expect(unitsGrantee3).to.equal(50n);
+
+      // Distribute flows
+      const flowRate = parseUnits("0.001", 18); // 0.001 ETHx per second
+      await gdav1ForwarderContract.write.distributeFlow(
+        [
+          config.distributionToken,
+          wallet1.account.address,
+          poolContract.address,
+          flowRate,
+          "0x",
+        ],
+        { account: wallet1.account.address },
+      );
+
+      // Wait for a short period to allow flows to update
+      await mine(1, { interval: 1000 });
+
+      // Check total flow rate
+      const totalFlowRate = await poolContract.read.getTotalFlowRate();
+      expectAbsDiff(totalFlowRate, flowRate).to.be.lte(100);
+
+      // // Check individual member flow rates
+      const flowRateGrantee1 = await poolContract.read.getMemberFlowRate([
+        config.grantees[0].account,
+      ]);
+      const flowRateGrantee2 = await poolContract.read.getMemberFlowRate([
+        config.grantees[1].account,
+      ]);
+      const flowRateGrantee3 = await poolContract.read.getMemberFlowRate([
+        config.grantees[2].account,
+      ]);
+
+      const totalUnits = 150n; // 30 + 70 + 50
+      const expectedFlowRate1 = (flowRate * 30n) / totalUnits;
+      const expectedFlowRate2 = (flowRate * 70n) / totalUnits;
+      const expectedFlowRate3 = (flowRate * 50n) / totalUnits;
+
+      expectAbsDiff(flowRateGrantee1, expectedFlowRate1).to.be.lte(100);
+      expectAbsDiff(flowRateGrantee2, expectedFlowRate2).to.be.lte(100);
+      expectAbsDiff(flowRateGrantee3, expectedFlowRate3).to.be.lte(100);
     });
 
-    it("should update units when council members change their allocations", async () => {
-      const { councilContract, poolContract, config, wallet1, wallet2 } =
-        await loadFixture(deploy);
+    it("should update units and flows when council members change their allocations", async () => {
+      const {
+        councilContract,
+        poolContract,
+        gdav1ForwarderContract,
+        config,
+        wallet1,
+        wallet2,
+      } = await loadFixture(deploy);
 
-      // Initial allocations (same as previous test)
+      // Initial allocations
       const initialAllocation1 = {
         accounts: [
           config.grantees[0].account,
@@ -177,6 +246,22 @@ describe("Integration Tests: Pools", () => {
         account: wallet2.account.address,
       });
 
+      // Distribute initial flows
+      const initialFlowRate = parseUnits("0.001", 18); // 0.001 ETHx per second
+      await gdav1ForwarderContract.write.distributeFlow(
+        [
+          config.distributionToken,
+          wallet1.account.address,
+          poolContract.address,
+          initialFlowRate,
+          "0x",
+        ],
+        { account: wallet1.account.address },
+      );
+
+      // Wait for a short period to allow flows to update
+      await mine(1, { interval: 1000 });
+
       // Council member 1 changes allocation to give all 50 units to grantee 3
       const newAllocation1 = {
         accounts: [config.grantees[2].account] as `0x${string}`[],
@@ -185,6 +270,22 @@ describe("Integration Tests: Pools", () => {
       await councilContract.write.allocateBudget([newAllocation1], {
         account: wallet1.account.address,
       });
+
+      // Distribute new flows
+      const newFlowRate = parseUnits("0.002", 18); // 0.002 ETHx per second
+      await gdav1ForwarderContract.write.distributeFlow(
+        [
+          config.distributionToken,
+          wallet1.account.address,
+          poolContract.address,
+          newFlowRate,
+          "0x",
+        ],
+        { account: wallet1.account.address },
+      );
+
+      // Wait for a short period to allow flows to update
+      await mine(1, { interval: 1000 });
 
       // Check units per grantee after reallocation
       const unitsGrantee1 = await poolContract.read.getUnits([
@@ -201,19 +302,41 @@ describe("Integration Tests: Pools", () => {
       expect(unitsGrantee2).to.equal(50n); // Only from member2 now
       expect(unitsGrantee3).to.equal(100n); // 50 from member1 + 50 from member2
 
-      // Check the total allocated units in the pool
+      // // Check the total allocated units in the pool
       const totalUnits = await poolContract.read.getTotalUnits();
       expect(totalUnits).to.equal(150n);
+
+      // // Check total flow rate
+      const totalFlowRate = await poolContract.read.getTotalFlowRate();
+      expectAbsDiff(totalFlowRate, newFlowRate).to.be.lte(100);
+
+      // // Check individual member flow rates
+      const flowRateGrantee1 = await poolContract.read.getMemberFlowRate([
+        config.grantees[0].account,
+      ]);
+      const flowRateGrantee2 = await poolContract.read.getMemberFlowRate([
+        config.grantees[1].account,
+      ]);
+      const flowRateGrantee3 = await poolContract.read.getMemberFlowRate([
+        config.grantees[2].account,
+      ]);
+
+      const expectedFlowRate1 = 0n;
+      const expectedFlowRate2 = (newFlowRate * 50n) / 150n;
+      const expectedFlowRate3 = (newFlowRate * 100n) / 150n;
+
+      expectAbsDiff(flowRateGrantee1, expectedFlowRate1).to.be.lte(100);
+      expectAbsDiff(flowRateGrantee2, expectedFlowRate2).to.be.lte(100);
+      expectAbsDiff(flowRateGrantee3, expectedFlowRate3).to.be.lte(100);
     });
 
     it("should update units when a grantee is removed and re-added", async () => {
       const {
         councilContract,
         poolContract,
-        accounts,
+        gdav1ForwarderContract,
         config,
         wallet1,
-        wallet2,
       } = await loadFixture(deploy);
 
       // Members allocate budgets
@@ -228,6 +351,26 @@ describe("Integration Tests: Pools", () => {
         account: wallet1.account.address,
       });
 
+      // Distribute initial flows
+      const initialFlowRate = parseUnits("0.001", 18); // 0.001 ETHx per second
+      await gdav1ForwarderContract.write.distributeFlow(
+        [
+          config.distributionToken,
+          wallet1.account.address,
+          poolContract.address,
+          initialFlowRate,
+          "0x",
+        ],
+        { account: wallet1.account.address },
+      );
+
+      expect(await poolContract.read.getTotalFlowRate()).to.equal(
+        initialFlowRate,
+      );
+
+      // Wait for a short period to allow flows to update
+      await mine(1, { interval: 1000 });
+
       // Remove grantee 1
       await councilContract.write.removeGrantee([config.grantees[0].account]);
 
@@ -236,6 +379,21 @@ describe("Integration Tests: Pools", () => {
         config.grantees[0].account,
       ]);
       expect(unitsGrantee1AfterRemoval).to.equal(0n);
+
+      // Check total flow rate after grantee removal
+      const totalFlowRateAfterRemoval =
+        await poolContract.read.getTotalFlowRate();
+      expectAbsDiff(totalFlowRateAfterRemoval, initialFlowRate).to.be.lte(100);
+
+      // Check individual member flow rates
+      const flowRateGrantee1AfterRemoval =
+        await poolContract.read.getMemberFlowRate([config.grantees[0].account]);
+      const flowRateGrantee2AfterRemoval =
+        await poolContract.read.getMemberFlowRate([config.grantees[1].account]);
+      expectAbsDiff(flowRateGrantee1AfterRemoval, 0n).to.be.lte(100);
+      expectAbsDiff(flowRateGrantee2AfterRemoval, initialFlowRate).to.be.lte(
+        100,
+      );
 
       // Re-add grantee 1
       await councilContract.write.addGrantee([
@@ -258,17 +416,53 @@ describe("Integration Tests: Pools", () => {
         account: wallet1.account.address,
       });
 
+      // Distribute new flows
+      const newFlowRate = parseUnits("0.002", 18); // 0.002 ETHx per second
+      await gdav1ForwarderContract.write.distributeFlow(
+        [
+          config.distributionToken,
+          wallet1.account.address,
+          poolContract.address,
+          newFlowRate,
+          "0x",
+        ],
+        { account: wallet1.account.address },
+      );
+
+      // Wait for a short period to allow flows to update
+      await mine(1, { interval: 1000 });
+
       // Now grantee 1 should have units again
       const unitsGrantee1Final = await poolContract.read.getUnits([
         config.grantees[0].account,
       ]);
       expect(unitsGrantee1Final).to.equal(50n);
+
+      // Check total flow rate after re-adding grantee 1
+      const totalFlowRateAfterReAdd =
+        await poolContract.read.getTotalFlowRate();
+      expectAbsDiff(totalFlowRateAfterReAdd, newFlowRate).to.be.lte(100);
+
+      // Check individual member flow rates
+      const flowRateGrantee1 = await poolContract.read.getMemberFlowRate([
+        config.grantees[0].account,
+      ]);
+      const flowRateGrantee2 = await poolContract.read.getMemberFlowRate([
+        config.grantees[1].account,
+      ]);
+
+      const expectedFlowRate1 = (newFlowRate * 50n) / 50n;
+      const expectedFlowRate2 = (newFlowRate * 0n) / 50n;
+
+      expectAbsDiff(flowRateGrantee1, expectedFlowRate1).to.be.lte(100);
+      expectAbsDiff(flowRateGrantee2, expectedFlowRate2).to.be.lte(100);
     });
 
     it("should update units when a council member is removed", async () => {
       const {
         councilContract,
         poolContract,
+        gdav1ForwarderContract,
         accounts,
         config,
         wallet1,
@@ -291,6 +485,22 @@ describe("Integration Tests: Pools", () => {
         account: wallet2.account.address,
       });
 
+      // Distribute initial flows
+      const initialFlowRate = parseUnits("0.001", 18); // 0.001 ETHx per second
+      await gdav1ForwarderContract.write.distributeFlow(
+        [
+          config.distributionToken,
+          wallet1.account.address,
+          poolContract.address,
+          initialFlowRate,
+          "0x",
+        ],
+        { account: wallet1.account.address },
+      );
+
+      // Wait for a short period to allow flows to update
+      await mine(1, { interval: 1000 });
+
       // Check initial units
       const unitsGrantee1 = await poolContract.read.getUnits([
         config.grantees[0].account,
@@ -300,6 +510,21 @@ describe("Integration Tests: Pools", () => {
       ]);
       expect(unitsGrantee1).to.equal(50n);
       expect(unitsGrantee2).to.equal(100n);
+
+      // Check initial flow rates
+      const flowRateGrantee1 = await poolContract.read.getMemberFlowRate([
+        config.grantees[0].account,
+      ]);
+      const flowRateGrantee2 = await poolContract.read.getMemberFlowRate([
+        config.grantees[1].account,
+      ]);
+      expectAbsDiff(flowRateGrantee1, (initialFlowRate * 50n) / 150n).to.be.lte(
+        100,
+      );
+      expectAbsDiff(
+        flowRateGrantee2,
+        (initialFlowRate * 100n) / 150n,
+      ).to.be.lte(100);
 
       // Remove council member 1
       await councilContract.write.removeCouncilMember([accounts[0].address]);
@@ -315,6 +540,18 @@ describe("Integration Tests: Pools", () => {
         config.grantees[1].account,
       ]);
       expect(unitsGrantee2AfterRemoval).to.equal(100n);
+
+      // Grantee 1's flow rate should now be 0
+      const flowRateGrantee1AfterRemoval =
+        await poolContract.read.getMemberFlowRate([config.grantees[0].account]);
+      expect(flowRateGrantee1AfterRemoval).to.equal(0n);
+
+      // Grantee 2's flow rate should now be the total flow rate
+      const flowRateGrantee2AfterRemoval =
+        await poolContract.read.getMemberFlowRate([config.grantees[1].account]);
+      expectAbsDiff(flowRateGrantee2AfterRemoval, initialFlowRate).to.be.lte(
+        100,
+      );
     });
   });
 });
