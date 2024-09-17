@@ -6,7 +6,7 @@ async function main() {
 
   const councilFactory = await viem.getContractAt(
     "CouncilFactory",
-    "0x207940b61c2b51ee1da56855ee745d10a34422ab",
+    "0x4f875b97cf4edb0d1d561a3d1926ed6663df08b2",
   );
 
   const hash = await councilFactory.write.createCouncil([

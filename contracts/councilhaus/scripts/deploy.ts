@@ -1,5 +1,5 @@
 import { run, viem } from "hardhat";
-import { parseEventLogs, parseUnits } from "viem";
+import { parseEventLogs } from "viem";
 
 async function deployAndVerify(contractName: string, args: any[]) {
   const contract = await viem.deployContract(contractName, args);
@@ -40,8 +40,8 @@ async function main() {
       councilName: "Spacing Guild",
       councilSymbol: "SPA",
       councilMembers: [
-        [wallet.account.address, parseUnits("100", 18)],
-        ["0xf632ce27ea72dea30d30c1a9700b6b3bceaa05cf", parseUnits("200", 18)],
+        [wallet.account.address, 100],
+        ["0xf632ce27ea72dea30d30c1a9700b6b3bceaa05cf", 200],
       ],
       grantees: [
         ["ENS Wayback Machine", "0x6ea869B6870dd98552B0C7e47dA90702a436358b"],

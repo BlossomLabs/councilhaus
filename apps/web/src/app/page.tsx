@@ -8,6 +8,8 @@ import { CouncilName } from "../components/CouncilName";
 import VotingCard from "../components/VotingCard";
 import { getGrantees } from "../utils/grantees";
 
+const defaultCouncil = "0x5cE162b6e6Dd6B936B9dC183Df79F61DBf8c675f";
+
 export default function Page() {
   const router = useRouter();
   const [council, setCouncil] = useState<`0x${string}` | undefined>(undefined);
@@ -15,12 +17,13 @@ export default function Page() {
   useEffect(() => {
     // Ensure the code runs only on the client side
     if (!window.location.hash) {
-      router.push("#0xB62f1Be9460cf2BEF90dB45dc90689C52C23F1B0");
-    } else {
-      // Set the council value after the hash is present
-      const address = getAddress(window.location.hash.slice(1));
-      setCouncil(address);
+      router.push(`#${defaultCouncil}`);
     }
+    // Set the council value once the hash is present
+    const address = getAddress(
+      window.location.hash?.slice(1) || defaultCouncil,
+    );
+    setCouncil(address);
   }, [router]);
 
   // Fetch data when the council is available
