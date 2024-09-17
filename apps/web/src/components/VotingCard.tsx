@@ -13,6 +13,7 @@ import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import React, { useState } from "react";
 import { useAccount } from "wagmi";
 import { useWriteAllocation } from "../hooks/useWriteAllocation";
+import VotingButton from "./VotingButton";
 
 type Project = { grantee: `0x${string}`; name: string };
 
@@ -29,12 +30,11 @@ const VotingCard = ({
   maxVotedProjects?: number;
   isLoading: boolean;
 }) => {
-  const { address } = useAccount();
-
   const [votes, setVotes] = useState<{ [grantee: `0x${string}`]: number }>(
     Object.fromEntries(projects.map((project) => [project.grantee, 0])),
   );
 
+  // Array of project addresses that have been voted on
   const votedProjects = Object.keys(votes).filter(
     (grantee) => (votes[grantee as `0x${string}`] ?? 0) > 0,
   );
@@ -118,22 +118,11 @@ const VotingCard = ({
         )}
       </CardContent>
       <CardFooter>
-        <Button
-          disabled={votedProjects.length < 1 || !address}
-          className="w-full py-2 rounded-lg mt-4 font-bold"
-          onClick={() =>
-            vote(
-              Object.entries(votes)
-                .filter(([, voteCount]) => voteCount > 0)
-                .map(([grantee, voteCount]) => ({
-                  account: grantee as `0x${string}`,
-                  ratio: (BigInt(voteCount) * 2n ** 128n) / BigInt(totalVotes),
-                })),
-            )
-          }
-        >
-          {address ? "Vote" : "Wallet not connected"}
-        </Button>
+        <VotingButton
+          votes={votes}
+          council={council}
+          disabled={votedProjects.length < 1}
+        />
       </CardFooter>
     </Card>
   );

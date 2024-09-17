@@ -1,4 +1,6 @@
 import "@repo/ui/globals.css";
+import { ToastProvider } from "@repo/ui/components/ui/toast";
+import { Toaster } from "@repo/ui/components/ui/toaster";
 import type { Metadata } from "next";
 import { Newsreader } from "next/font/google";
 import Footer from "../components/Footer";
@@ -26,13 +28,16 @@ export default function RootLayout({
     <html lang="en">
       <body className={newsreader.className}>
         <WalletProvider>
-          <div className="flex flex-col min-h-screen">
-            <Header />
-            <main className="flex-grow px-4 container max-w-3xl mx-auto">
-              {children}
-            </main>
-            <Footer />
-          </div>
+          <ToastProvider>
+            <div className="flex flex-col min-h-screen">
+              <Header />
+              <main className="flex-grow px-4 container max-w-3xl mx-auto">
+                {children}
+              </main>
+              <Toaster />
+              <Footer />
+            </div>
+          </ToastProvider>
         </WalletProvider>
       </body>
     </html>
