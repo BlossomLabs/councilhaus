@@ -24,7 +24,7 @@ const VotingCard = ({
   isLoading = false,
 }: {
   className: string;
-  council: `0x${string}`;
+  council: `0x${string}` | undefined;
   projects: Project[];
   maxVotedProjects?: number;
   isLoading: boolean;
@@ -127,7 +127,7 @@ const VotingCard = ({
                 .filter(([, voteCount]) => voteCount > 0)
                 .map(([grantee, voteCount]) => ({
                   account: grantee as `0x${string}`,
-                  ratio: voteCount / totalVotes,
+                  ratio: (BigInt(voteCount) * 2n ** 128n) / BigInt(totalVotes),
                 })),
             )
           }
