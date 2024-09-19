@@ -11,11 +11,10 @@ import {
 import { Input } from "@repo/ui/components/ui/input";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import React, { useState } from "react";
-import { useAccount } from "wagmi";
 import { useWriteAllocation } from "../hooks/useWriteAllocation";
 import VotingButton from "./VotingButton";
 
-type Project = { grantee: `0x${string}`; name: string };
+type Project = { account: `0x${string}`; name: string };
 
 const VotingCard = ({
   className,
@@ -31,7 +30,7 @@ const VotingCard = ({
   isLoading: boolean;
 }) => {
   const [votes, setVotes] = useState<{ [grantee: `0x${string}`]: number }>(
-    Object.fromEntries(projects.map((project) => [project.grantee, 0])),
+    Object.fromEntries(projects.map((project) => [project.account, 0])),
   );
 
   // Array of project addresses that have been voted on
@@ -68,17 +67,17 @@ const VotingCard = ({
               projects)
             </h4>
             {projects.map((project) => {
-              const voteCount = votes[project.grantee] || 0;
+              const voteCount = votes[project.account] || 0;
               return (
                 <div
-                  key={project.grantee}
+                  key={project.account}
                   className="flex items-center justify-between mb-3"
                 >
                   <span className="flex-grow">{project.name}</span>
                   <div className="flex items-center">
                     <Button
                       disabled={voteCount <= 0}
-                      onClick={() => handleVote(project.grantee, voteCount - 1)}
+                      onClick={() => handleVote(project.account, voteCount - 1)}
                       className="bg-gray-700 w-8 py-1 text-white hover:bg-gray-500 rounded-r-none"
                     >
                       -
@@ -88,7 +87,7 @@ const VotingCard = ({
                       value={voteCount}
                       onChange={(e) =>
                         handleVote(
-                          project.grantee,
+                          project.account,
                           Number.parseInt(e.target.value),
                         )
                       }
@@ -97,9 +96,9 @@ const VotingCard = ({
                     <Button
                       disabled={
                         votedProjects.length >= maxVotedProjects &&
-                        !votes[project.grantee]
+                        !votes[project.account]
                       }
-                      onClick={() => handleVote(project.grantee, voteCount + 1)}
+                      onClick={() => handleVote(project.account, voteCount + 1)}
                       className="bg-gray-700 w-8 py-1 text-white hover:bg-gray-500 rounded-l-none"
                     >
                       +
