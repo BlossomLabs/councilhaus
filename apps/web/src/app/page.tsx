@@ -1,12 +1,11 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getAddress } from "viem";
 import { CouncilName } from "../components/CouncilName";
 import VotingCard from "../components/VotingCard";
-import { getGrantees } from "../utils/grantees";
+import { useCouncil } from "../hooks/useCouncil";
 
 const defaultCouncil = "0x5cE162b6e6Dd6B936B9dC183Df79F61DBf8c675f";
 
@@ -27,15 +26,13 @@ export default function Page() {
   }, [router]);
 
   // Fetch data when the council is available
-  const { data: grantees, isLoading } = useQuery({
-    queryKey: ["grantees", council],
-    queryFn: () => council && getGrantees(council),
-    enabled: !!council, // Only run query if council is defined
-  });
+  const { data: councilData, isLoading } = useCouncil(council);
+  const grantees = councilData?.grantees;
+
   return (
     <main>
       <CouncilName
-        council={council}
+        name={councilData?.councilName}
         className="h-12 text-4xl font-bold mb-4 text-accent"
       />
       <VotingCard
