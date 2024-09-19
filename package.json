@@ -24,9 +24,5 @@
     "node": ">=18"
   },
   "packageManager": "bun@1.1.4",
-  "workspaces": ["apps/*", "contracts/*", "packages/*"],
-  "dependencies": {
-    "graphql": "^16.9.0",
-    "graphql-request": "^7.1.0"
-  }
+  "workspaces": ["apps/*", "contracts/*", "packages/*"]
 }

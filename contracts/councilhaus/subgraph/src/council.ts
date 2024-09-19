@@ -1,7 +1,7 @@
 import { BigInt } from "@graphprotocol/graph-ts";
 import { log } from "@graphprotocol/graph-ts";
 import { Allocation, CouncilMember, Grantee } from "../generated/schema";
-import type {
+import {
   BudgetAllocated,
   CouncilMemberAdded,
   CouncilMemberRemoved,

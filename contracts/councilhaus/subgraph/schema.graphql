@@ -2,6 +2,7 @@ type Council @entity {
   id: ID!
   councilName: String!
   councilSymbol: String!
+  pool: Bytes!
   distributionToken: Bytes!
   councilMembers: [CouncilMember!]! @derivedFrom(field: "council")
   grantees: [Grantee!]! @derivedFrom(field: "council")

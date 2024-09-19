@@ -19,7 +19,7 @@
   },
   "overrides": [
     {
-      "include": ["contracts/councilhaus-subgraph/**"],
+      "include": ["contracts/**/subgraph/**"],
       "linter": {
         "rules": {
           "suspicious": {
