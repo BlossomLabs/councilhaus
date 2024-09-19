@@ -13,7 +13,7 @@
     "@tanstack/react-query": "^5.55.4",
     "ethereum-blockies-base64": "^1.0.2",
     "graphql-request": "^7.1.0",
-    "next": "14.2.8",
+    "next": "14.2.10",
     "react": "^18",
     "react-dom": "^18",
     "viem": "2.x",
