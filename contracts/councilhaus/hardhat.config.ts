@@ -1,5 +1,6 @@
 import type { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox-viem";
+import "hardhat-abi-exporter";
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -35,6 +36,12 @@ const config: HardhatUserConfig = {
   },
   sourcify: {
     enabled: false,
+  },
+  abiExporter: {
+    path: "../councilhaus-subgraph/abis",
+    runOnCompile: true,
+    clear: true,
+    flat: true,
   },
 };
 

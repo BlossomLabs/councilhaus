@@ -1,0 +1,35 @@
+type Council @entity {
+  id: ID!
+  councilName: String!
+  councilSymbol: String!
+  distributionToken: Bytes!
+  councilMembers: [CouncilMember!]! @derivedFrom(field: "council")
+  grantees: [Grantee!]! @derivedFrom(field: "council")
+  allocations: [Allocation!]! @derivedFrom(field: "council")
+  createdAt: BigInt!
+}
+
+type CouncilMember @entity {
+  id: ID!
+  account: Bytes!
+  votingPower: BigInt!
+  council: Council!
+  enabled: Boolean!
+}
+
+type Grantee @entity {
+  id: ID!
+  name: String!
+  account: Bytes!
+  council: Council!
+  enabled: Boolean!
+}
+
+type Allocation @entity {
+  id: ID!
+  council: Council!
+  councilMember: CouncilMember!
+  grantees: [Grantee!]!
+  amounts: [BigInt!]!
+  allocatedAt: BigInt!
+}

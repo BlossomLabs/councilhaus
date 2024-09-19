@@ -1,0 +1,8 @@
+{
+  "optimism": {
+    "CouncilFactory": {
+      "address": "0x8e01ebaa4f4d660294e0d1301fe46ed96f4c44eb",
+      "startBlock": 125496765
+    }
+  }
+}

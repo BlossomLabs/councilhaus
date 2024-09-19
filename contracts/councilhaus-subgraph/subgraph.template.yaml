@@ -1,0 +1,62 @@
+specVersion: 1.0.0
+description: Track councils, council members, grantees, and allocations created by the CouncilFactory.
+repository: "https://github.com/BlossomLabs/councilhaus/tree/master/packages/councilhaus-subgraph"
+
+indexerHints:
+  prune: auto
+
+schema:
+  file: ./schema.graphql
+
+dataSources:
+  - kind: ethereum
+    name: CouncilFactory
+    network: {{ network }}
+    source:
+      address: "{{ address }}"
+      abi: CouncilFactory
+      startBlock: {{ startBlock }}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - Council
+      abis:
+        - name: CouncilFactory
+          file: ./abis/CouncilFactory.json
+        - name: Council
+          file: ./abis/Council.json
+      eventHandlers:
+        - event: CouncilCreated(address,address)
+          handler: handleCouncilCreated
+      file: ./src/council-factory.ts
+templates:
+  - kind: ethereum/contract
+    name: Council
+    network: {{ network }}
+    source:
+      abi: Council
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - CouncilMember
+        - Grantee
+        - Budget
+      abis:
+        - name: Council
+          file: ./abis/Council.json
+      eventHandlers:
+        - event: CouncilMemberAdded(address,uint256)
+          handler: handleCouncilMemberAdded
+        - event: CouncilMemberRemoved(address)
+          handler: handleCouncilMemberRemoved
+        - event: GranteeAdded(string,address)
+          handler: handleGranteeAdded
+        - event: GranteeRemoved(address)
+          handler: handleGranteeRemoved
+        - event: BudgetAllocated(address,(address[],uint128[]))
+          handler: handleBudgetAllocated
+      file: ./src/council.ts
