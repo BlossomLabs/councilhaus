@@ -1,5 +1,2 @@
-cd contracts/councilhaus
-npx hardhat clean
-cd ../..
 bun run format-and-lint:fix
 git update-index --again

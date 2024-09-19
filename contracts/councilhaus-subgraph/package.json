@@ -3,7 +3,7 @@
   "license": "AGPL-3.0-only",
   "scripts": {
     "codegen": "graph codegen",
-    "build": "graph build",
+    "build": "bun prepare:optimism && bun codegen && graph build",
     "deploy": "graph deploy --node https://api.studio.thegraph.com/deploy/ councilhaus-optimism",
     "prepare:optimism": "mustache config/optimism.json subgraph.template.yaml > subgraph.yaml",
     "create-local": "graph create --node http://localhost:8020/ councilhaus-optimism",
