@@ -9,7 +9,7 @@ import {
   test,
 } from "matchstick-as/assembly/index";
 import { handleCouncilCreated } from "../src/council-factory";
-import { createCouncilCreatedEvent } from "./council-factory-utils";
+import { createCouncilCreatedEvent } from "./utils";
 
 describe("Describe entity assertions", () => {
   beforeAll(() => {
