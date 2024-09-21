@@ -10,16 +10,17 @@ import {
 } from "@repo/ui/components/ui/card";
 import { Input } from "@repo/ui/components/ui/input";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
-import React, { useState } from "react";
-import { useWriteAllocation } from "../hooks/useWriteAllocation";
+import React, { useEffect, useState } from "react";
 import VotingButton from "./VotingButton";
 
 type Project = { account: `0x${string}`; name: string };
+type Allocation = { [grantee: `0x${string}`]: number };
 
 const VotingCard = ({
   className,
   council,
   projects,
+  initialAllocation,
   maxVotedProjects = 3,
   isLoading = false,
 }: {
@@ -27,11 +28,36 @@ const VotingCard = ({
   council: `0x${string}` | undefined;
   projects: Project[];
   maxVotedProjects?: number;
+  initialAllocation: Allocation | undefined;
   isLoading: boolean;
 }) => {
-  const [votes, setVotes] = useState<{ [grantee: `0x${string}`]: number }>(
-    Object.fromEntries(projects.map((project) => [project.account, 0])),
+  console.log(
+    initialAllocation,
+    projects.map((project) => [
+      project.account,
+      initialAllocation?.[project.account] ?? 0,
+    ]),
   );
+
+  const [votes, setVotes] = useState<Allocation>(
+    Object.fromEntries(
+      projects.map((project) => [
+        project.account,
+        initialAllocation?.[project.account] ?? 0,
+      ]),
+    ),
+  );
+
+  useEffect(() => {
+    setVotes(
+      Object.fromEntries(
+        projects.map((project) => [
+          project.account,
+          initialAllocation?.[project.account] ?? 0,
+        ]),
+      ),
+    );
+  }, [initialAllocation, projects]);
 
   // Array of project addresses that have been voted on
   const votedProjects = Object.keys(votes).filter(
@@ -47,8 +73,6 @@ const VotingCard = ({
       [grantee]: newValue,
     }));
   };
-
-  const vote = useWriteAllocation(council);
 
   return (
     <Card className={className}>

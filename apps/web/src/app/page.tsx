@@ -3,8 +3,10 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getAddress } from "viem";
+import { useAccount } from "wagmi";
 import { CouncilName } from "../components/CouncilName";
 import VotingCard from "../components/VotingCard";
+import { useAllocation } from "../hooks/useAllocation";
 import { useCouncil } from "../hooks/useCouncil";
 
 const defaultCouncil = "0x5cE162b6e6Dd6B936B9dC183Df79F61DBf8c675f";
@@ -26,7 +28,9 @@ export default function Page() {
   }, [router]);
 
   // Fetch data when the council is available
+  const { address } = useAccount();
   const { data: councilData, isLoading } = useCouncil(council);
+  const { data: myAllocation } = useAllocation(council, address);
   const grantees = councilData?.grantees;
 
   return (
@@ -39,6 +43,7 @@ export default function Page() {
         className="max-w-lg mx-auto"
         council={council}
         projects={grantees ?? []}
+        initialAllocation={myAllocation}
         maxVotedProjects={3}
         isLoading={isLoading || !council}
       />
