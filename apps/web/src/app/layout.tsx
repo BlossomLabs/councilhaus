@@ -31,7 +31,7 @@ export default function RootLayout({
           <ToastProvider>
             <div className="flex flex-col min-h-screen">
               <Header />
-              <main className="flex-grow px-4 container max-w-3xl mx-auto">
+              <main className="flex-grow container max-w-4xl mx-auto">
                 {children}
               </main>
               <Toaster />

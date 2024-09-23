@@ -8,6 +8,7 @@ export const useCouncil = (council: `0x${string}` | undefined) => {
       query CouncilNameAndGrantees($council: String) {
         council(id: $council) {
           councilName
+          pool
           grantees {
             name
             account
@@ -20,6 +21,7 @@ export const useCouncil = (council: `0x${string}` | undefined) => {
       councilName: string;
       grantees: { name: string; account: `0x${string}` }[];
       maxAllocationsPerMember: number;
+      pool: string;
     };
   }>({
     queryKey: ["data"],

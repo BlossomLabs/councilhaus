@@ -1,5 +1,8 @@
 "use client";
 
+import { Badge } from "@repo/ui/components/ui/badge";
+import { Label } from "@repo/ui/components/ui/label";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getAddress } from "viem";
@@ -34,10 +37,16 @@ export default function Page() {
 
   return (
     <main>
-      <CouncilName
-        name={councilData?.councilName}
-        className="h-12 text-4xl font-bold mb-4 text-accent"
-      />
+      <ContractLinks council={council} pool={councilData?.pool} />
+      <Link
+        href={`https://explorer.superfluid.finance/optimism-mainnet/accounts/${council}?tab=pools`}
+        target="_blank"
+      >
+        <CouncilName
+          name={councilData?.councilName}
+          className="h-12 text-4xl font-bold mb-4 text-accent"
+        />
+      </Link>
       <VotingCard
         className="max-w-lg mx-auto"
         council={council}
@@ -48,5 +57,32 @@ export default function Page() {
         votingPower={votingPower}
       />
     </main>
+  );
+}
+
+function ContractLinks({
+  council,
+  pool,
+}: { council: string | undefined; pool: string | undefined }) {
+  return (
+    <div className="flex flex-row gap-1 mb-4 items-center justify-end">
+      <Label className="pr-2">Contracts: </Label>
+      <Badge variant="outline">
+        <Link
+          href={`https://explorer.optimism.io/address/${council}`}
+          target="_blank"
+        >
+          Council
+        </Link>
+      </Badge>
+      <Badge variant="outline">
+        <Link
+          href={`https://explorer.optimism.io/address/${pool}`}
+          target="_blank"
+        >
+          Pool
+        </Link>
+      </Badge>
+    </div>
   );
 }
