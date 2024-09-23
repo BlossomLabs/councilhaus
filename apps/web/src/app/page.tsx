@@ -44,7 +44,7 @@ export default function Page() {
         council={council}
         projects={grantees ?? []}
         initialAllocation={myAllocation}
-        maxVotedProjects={3}
+        maxVotedProjects={councilData?.maxAllocationsPerMember ?? 0}
         isLoading={isLoading || !council}
         votingPower={votingPower}
       />

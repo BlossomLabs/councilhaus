@@ -12,12 +12,14 @@ export const useCouncil = (council: `0x${string}` | undefined) => {
             name
             account
           }
+          maxAllocationsPerMember
         }
       }`;
   const { data, isLoading } = useQuery<{
     council: {
       councilName: string;
       grantees: { name: string; account: `0x${string}` }[];
+      maxAllocationsPerMember: number;
     };
   }>({
     queryKey: ["data"],
