@@ -90,7 +90,6 @@ const VotingCard = ({
               </div>
             </div>
             {projects.map((project) => {
-              console.log(totalVotes, votingPower);
               const voteCount = votes[project.account] || 0;
               return (
                 <div
@@ -101,7 +100,12 @@ const VotingCard = ({
                   <div className="flex items-center">
                     <Button
                       disabled={voteCount <= 0}
-                      onClick={() => handleVote(project.account, voteCount - 1)}
+                      onClick={() =>
+                        handleVote(
+                          project.account,
+                          Math.max(0, voteCount - Math.floor(votingPower / 10)),
+                        )
+                      }
                       className="bg-gray-700 w-8 py-1 text-white hover:bg-gray-500 rounded-r-none"
                     >
                       -
@@ -123,14 +127,23 @@ const VotingCard = ({
                           !votes[project.account]) ||
                         totalVotes >= votingPower
                       }
-                      onClick={() => handleVote(project.account, voteCount + 1)}
+                      onClick={() =>
+                        handleVote(
+                          project.account,
+                          voteCount +
+                            Math.min(
+                              votingPower - totalVotes,
+                              Math.floor(votingPower / 10),
+                            ),
+                        )
+                      }
                       className="bg-gray-700 w-8 py-1 text-white hover:bg-gray-500 rounded-l-none"
                     >
                       +
                     </Button>
                     <span className="w-12 text-right">
                       {totalVotes > 0
-                        ? Math.round((voteCount / totalVotes) * 100)
+                        ? Math.round((voteCount / votingPower) * 100)
                         : 0}
                       %
                     </span>

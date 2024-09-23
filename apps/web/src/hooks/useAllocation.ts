@@ -44,18 +44,15 @@ export const useAllocation = (
     enabled: !!council && !!councilMember,
   });
   const allocation = data?.allocations?.[0];
-  if (!allocation) {
-    return { data: undefined, isLoading, votingPower: 0 };
-  }
-  const formattedAllocation: { [grantee: `0x${string}`]: number } =
-    Object.fromEntries(
-      allocation.grantees.map((g, index) => [
-        g.account as `0x${string}`,
-        Number(allocation.amounts[index]),
-      ]),
-    );
   return {
-    data: formattedAllocation,
+    data: allocation
+      ? Object.fromEntries(
+          allocation.grantees.map((g, index) => [
+            g.account as `0x${string}`,
+            Number(allocation.amounts[index]),
+          ]),
+        )
+      : undefined,
     votingPower: Number(data?.councilMember?.votingPower ?? 0),
     isLoading,
   };
