@@ -9,9 +9,15 @@ export const useCouncil = (council: `0x${string}` | undefined) => {
         council(id: $council) {
           councilName
           pool
+          councilMembers {
+            account
+            votingPower
+            enabled
+          }
           grantees {
             name
             account
+            enabled
           }
           maxAllocationsPerMember
         }
@@ -19,7 +25,12 @@ export const useCouncil = (council: `0x${string}` | undefined) => {
   const { data, isLoading } = useQuery<{
     council: {
       councilName: string;
-      grantees: { name: string; account: `0x${string}` }[];
+      councilMembers: {
+        account: `0x${string}`;
+        votingPower: number;
+        enabled: boolean;
+      }[];
+      grantees: { name: string; account: `0x${string}`; enabled: boolean }[];
       maxAllocationsPerMember: number;
       pool: string;
     };
@@ -30,5 +41,12 @@ export const useCouncil = (council: `0x${string}` | undefined) => {
     },
     enabled: !!council,
   });
-  return { data: data?.council, isLoading };
+  return {
+    councilName: data?.council?.councilName,
+    councilMembers: data?.council?.councilMembers.filter((m) => m.enabled),
+    grantees: data?.council?.grantees.filter((g) => g.enabled),
+    maxAllocationsPerMember: data?.council?.maxAllocationsPerMember,
+    pool: data?.council?.pool,
+    isLoading,
+  };
 };

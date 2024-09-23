@@ -2,6 +2,7 @@
 
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Label } from "@repo/ui/components/ui/label";
+import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -31,28 +32,55 @@ export default function Page() {
 
   // Fetch data when the council is available
   const { address } = useAccount();
-  const { data: councilData, isLoading } = useCouncil(council);
+  const {
+    councilName,
+    councilMembers,
+    grantees,
+    maxAllocationsPerMember,
+    pool,
+    isLoading,
+  } = useCouncil(council);
   const { data: myAllocation, votingPower } = useAllocation(council, address);
-  const grantees = councilData?.grantees;
+
+  const totalVotingPower = councilMembers?.reduce(
+    (acc, curr) => acc + Number(curr.votingPower),
+    0,
+  );
+  console.log(totalVotingPower);
 
   return (
     <main>
-      <ContractLinks council={council} pool={councilData?.pool} />
+      <ContractLinks council={council} pool={pool} />
       <Link
         href={`https://explorer.superfluid.finance/optimism-mainnet/accounts/${council}?tab=pools`}
         target="_blank"
       >
         <CouncilName
-          name={councilData?.councilName}
+          name={councilName}
           className="h-12 text-4xl font-bold mb-4 text-accent"
         />
       </Link>
+      <div className="flex flex-col gap-4 mb-4">
+        {totalVotingPower ? (
+          <p>
+            You are 1 of {councilMembers?.length} council members, holding{" "}
+            {((votingPower / totalVotingPower) * 100).toFixed(2)}% of the total
+            voting power. Your vote plays a significant role in determining how
+            the budget is allocated to projects. Use your influence wisely.
+          </p>
+        ) : (
+          <>
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+          </>
+        )}
+      </div>
       <VotingCard
         className="max-w-lg mx-auto"
         council={council}
         projects={grantees ?? []}
         initialAllocation={myAllocation}
-        maxVotedProjects={councilData?.maxAllocationsPerMember ?? 0}
+        maxVotedProjects={maxAllocationsPerMember ?? 0}
         isLoading={isLoading || !council}
         votingPower={votingPower}
       />
