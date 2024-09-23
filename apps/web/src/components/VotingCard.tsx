@@ -21,24 +21,18 @@ const VotingCard = ({
   council,
   projects,
   initialAllocation,
+  votingPower,
   maxVotedProjects = 3,
   isLoading = false,
 }: {
   className: string;
   council: `0x${string}` | undefined;
   projects: Project[];
-  maxVotedProjects?: number;
   initialAllocation: Allocation | undefined;
+  votingPower: number;
+  maxVotedProjects?: number;
   isLoading: boolean;
 }) => {
-  console.log(
-    initialAllocation,
-    projects.map((project) => [
-      project.account,
-      initialAllocation?.[project.account] ?? 0,
-    ]),
-  );
-
   const [votes, setVotes] = useState<Allocation>(
     Object.fromEntries(
       projects.map((project) => [
@@ -86,11 +80,17 @@ const VotingCard = ({
           <div>No projects to vote on</div>
         ) : (
           <>
-            <h4 className="h-12 text-xl mb-6 text-accent">
-              Cast Your Vote ({votedProjects.length} / {maxVotedProjects}{" "}
-              projects)
-            </h4>
+            <div className="flex justify-between">
+              <h4 className="h-12 text-xl mb-6 text-accent">
+                Cast Your Vote ({votedProjects.length} / {maxVotedProjects}{" "}
+                projects)
+              </h4>
+              <div className="text-sm mt-2">
+                Used {totalVotes} / {votingPower}
+              </div>
+            </div>
             {projects.map((project) => {
+              console.log(totalVotes, votingPower);
               const voteCount = votes[project.account] || 0;
               return (
                 <div
@@ -119,8 +119,9 @@ const VotingCard = ({
                     />
                     <Button
                       disabled={
-                        votedProjects.length >= maxVotedProjects &&
-                        !votes[project.account]
+                        (votedProjects.length >= maxVotedProjects &&
+                          !votes[project.account]) ||
+                        totalVotes >= votingPower
                       }
                       onClick={() => handleVote(project.account, voteCount + 1)}
                       className="bg-gray-700 w-8 py-1 text-white hover:bg-gray-500 rounded-l-none"
@@ -154,8 +155,9 @@ const VotingCard = ({
 function SkeletonVote() {
   return (
     <div className="flex flex-col space-y-3">
-      <div className="h-12">
+      <div className="h-12 flex justify-between items-center">
         <Skeleton className="w-3/5 h-5" />
+        <Skeleton className="w-1/5 h-3" />
       </div>
 
       <div className="space-y-2 mt-4">

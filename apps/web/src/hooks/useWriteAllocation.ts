@@ -1,24 +1,11 @@
 import { parseAbi } from "viem";
-import {
-  useAccount,
-  useBalance,
-  usePublicClient,
-  useWalletClient,
-} from "wagmi";
+import { usePublicClient, useWalletClient } from "wagmi";
 
 export const useWriteAllocation = (council: `0x${string}` | undefined) => {
-  const { address } = useAccount();
-  const balance = useBalance({
-    address,
-    token: council,
-    query: {
-      enabled: !!council,
-    },
-  });
   const publicClient = usePublicClient();
   const { data: walletClient } = useWalletClient();
 
-  return async (allocation: { account: `0x${string}`; ratio: bigint }[]) => {
+  return async (allocation: { account: `0x${string}`; amount: bigint }[]) => {
     if (!council || !walletClient || !publicClient) {
       throw new Error("Council or client is not set");
     }
@@ -33,10 +20,7 @@ export const useWriteAllocation = (council: `0x${string}` | undefined) => {
       args: [
         {
           accounts: allocation.map(({ account }) => account),
-          amounts: allocation.map(
-            ({ ratio }) =>
-              (ratio * BigInt(balance.data?.value ?? 0)) / 2n ** 128n,
-          ),
+          amounts: allocation.map(({ amount }) => amount),
         },
       ],
     });

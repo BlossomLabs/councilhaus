@@ -9,6 +9,9 @@ export const useAllocation = (
     "https://api.goldsky.com/api/public/project_cm10r8z66lbri01se6301ddxj/subgraphs/councilhaus/0.0.1/gn";
   const query = gql`
     query LastAllocation($council: String, $councilMember: String) {
+      councilMember(id:$councilMember) {
+        votingPower
+      }
       allocations(
         first: 1
         where: { council: $council, councilMember: $councilMember }
@@ -23,6 +26,9 @@ export const useAllocation = (
     }
   `;
   const { data, isLoading } = useQuery<{
+    councilMember: {
+      votingPower: string;
+    };
     allocations: {
       grantees: { id: string }[];
       amounts: string[];
@@ -39,7 +45,7 @@ export const useAllocation = (
   });
   const allocation = data?.allocations?.[0];
   if (!allocation) {
-    return { data: undefined, isLoading };
+    return { data: undefined, isLoading, votingPower: 0 };
   }
   const formattedAllocation: { [grantee: `0x${string}`]: number } =
     Object.fromEntries(
@@ -50,6 +56,7 @@ export const useAllocation = (
     );
   return {
     data: formattedAllocation,
+    votingPower: Number(data?.councilMember?.votingPower ?? 0),
     isLoading,
   };
 };

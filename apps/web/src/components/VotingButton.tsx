@@ -22,7 +22,6 @@ const VotingButton = ({
 }: VotingButtonProps) => {
   const { address } = useAccount();
   const vote = useWriteAllocation(council);
-  const totalVotes = Object.values(votes).reduce((a, b) => a + b, 0);
   const [isLoading, setIsLoading] = useState(false);
   const toast = useToast();
 
@@ -37,7 +36,7 @@ const VotingButton = ({
             .filter(([, voteCount]) => voteCount > 0)
             .map(([grantee, voteCount]) => ({
               account: grantee as `0x${string}`,
-              ratio: (BigInt(voteCount) * 2n ** 128n) / BigInt(totalVotes),
+              amount: BigInt(voteCount),
             })),
         )
           .then(() => {

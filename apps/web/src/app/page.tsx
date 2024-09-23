@@ -30,7 +30,7 @@ export default function Page() {
   // Fetch data when the council is available
   const { address } = useAccount();
   const { data: councilData, isLoading } = useCouncil(council);
-  const { data: myAllocation } = useAllocation(council, address);
+  const { data: myAllocation, votingPower } = useAllocation(council, address);
   const grantees = councilData?.grantees;
 
   return (
@@ -46,6 +46,7 @@ export default function Page() {
         initialAllocation={myAllocation}
         maxVotedProjects={3}
         isLoading={isLoading || !council}
+        votingPower={votingPower}
       />
     </main>
   );
