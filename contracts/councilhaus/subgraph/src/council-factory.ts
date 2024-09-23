@@ -13,6 +13,7 @@ export function handleCouncilCreated(event: CouncilCreatedEvent): void {
   entity.councilSymbol = councilContract.symbol();
   entity.pool = event.params.pool;
   entity.distributionToken = councilContract.distributionToken();
+  entity.maxAllocationsPerMember = councilContract.maxAllocationsPerMember();
   entity.createdAt = event.block.timestamp;
 
   entity.save();

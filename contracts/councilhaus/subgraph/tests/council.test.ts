@@ -44,25 +44,25 @@ describe("Council entity assertions", () => {
     assert.entityCount("CouncilMember", 1);
     assert.fieldEquals(
       "CouncilMember",
-      memberAddress.toHexString(),
+      `${COUNCIL_ADDRESS}-${memberAddress.toHexString()}`,
       "account",
       memberAddress.toHexString(),
     );
     assert.fieldEquals(
       "CouncilMember",
-      memberAddress.toHexString(),
+      `${COUNCIL_ADDRESS}-${memberAddress.toHexString()}`,
       "votingPower",
       votingPower.toString(),
     );
     assert.fieldEquals(
       "CouncilMember",
-      memberAddress.toHexString(),
+      `${COUNCIL_ADDRESS}-${memberAddress.toHexString()}`,
       "council",
       COUNCIL_ADDRESS,
     );
     assert.fieldEquals(
       "CouncilMember",
-      memberAddress.toHexString(),
+      `${COUNCIL_ADDRESS}-${memberAddress.toHexString()}`,
       "enabled",
       "true",
     );
@@ -90,13 +90,13 @@ describe("Council entity assertions", () => {
 
     assert.fieldEquals(
       "CouncilMember",
-      memberAddress.toHexString(),
+      `${COUNCIL_ADDRESS}-${memberAddress.toHexString()}`,
       "votingPower",
       "0",
     );
     assert.fieldEquals(
       "CouncilMember",
-      memberAddress.toHexString(),
+      `${COUNCIL_ADDRESS}-${memberAddress.toHexString()}`,
       "enabled",
       "false",
     );
@@ -121,25 +121,25 @@ describe("Council entity assertions", () => {
     assert.entityCount("Grantee", 1);
     assert.fieldEquals(
       "Grantee",
-      granteeAddress.toHexString(),
+      `${COUNCIL_ADDRESS}-${granteeAddress.toHexString()}`,
       "name",
       granteeName,
     );
     assert.fieldEquals(
       "Grantee",
-      granteeAddress.toHexString(),
+      `${COUNCIL_ADDRESS}-${granteeAddress.toHexString()}`,
       "account",
       granteeAddress.toHexString(),
     );
     assert.fieldEquals(
       "Grantee",
-      granteeAddress.toHexString(),
+      `${COUNCIL_ADDRESS}-${granteeAddress.toHexString()}`,
       "council",
       COUNCIL_ADDRESS,
     );
     assert.fieldEquals(
       "Grantee",
-      granteeAddress.toHexString(),
+      `${COUNCIL_ADDRESS}-${granteeAddress.toHexString()}`,
       "enabled",
       "true",
     );
@@ -168,7 +168,7 @@ describe("Council entity assertions", () => {
 
     assert.fieldEquals(
       "Grantee",
-      granteeAddress.toHexString(),
+      `${COUNCIL_ADDRESS}-${granteeAddress.toHexString()}`,
       "enabled",
       "false",
     );
@@ -220,14 +220,14 @@ describe("Council entity assertions", () => {
       "Allocation",
       allocationId,
       "councilMember",
-      memberAddress.toHexString(),
+      `${COUNCIL_ADDRESS}-${memberAddress.toHexString()}`,
     );
     assert.fieldEquals("Allocation", allocationId, "amounts", "[1000]");
     assert.fieldEquals(
       "Allocation",
       allocationId,
       "grantees",
-      `[${granteeAddress.toHexString()}]`,
+      `[${COUNCIL_ADDRESS}-${granteeAddress.toHexString()}]`,
     );
   });
 });

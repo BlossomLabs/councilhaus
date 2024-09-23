@@ -6,10 +6,10 @@ export const useAllocation = (
   councilMember: `0x${string}` | undefined,
 ) => {
   const url =
-    "https://api.goldsky.com/api/public/project_cm10r8z66lbri01se6301ddxj/subgraphs/councilhaus/0.0.1/gn";
+    "https://api.goldsky.com/api/public/project_cm10r8z66lbri01se6301ddxj/subgraphs/councilhaus/0.0.2/gn";
   const query = gql`
     query LastAllocation($council: String, $councilMember: String) {
-      councilMember(id:$councilMember) {
+      councilMember(id: $councilMember) {
         votingPower
       }
       allocations(
@@ -19,7 +19,7 @@ export const useAllocation = (
         orderDirection: desc
       ) {
         grantees {
-          id
+          account
         }
         amounts
       }
@@ -30,7 +30,7 @@ export const useAllocation = (
       votingPower: string;
     };
     allocations: {
-      grantees: { id: string }[];
+      grantees: { account: string }[];
       amounts: string[];
     }[];
   }>({
@@ -38,7 +38,7 @@ export const useAllocation = (
     async queryFn() {
       return await request(url, query, {
         council: council?.toLowerCase(),
-        councilMember: councilMember?.toLowerCase(),
+        councilMember: `${council?.toLowerCase()}-${councilMember?.toLowerCase()}`,
       });
     },
     enabled: !!council && !!councilMember,
@@ -50,7 +50,7 @@ export const useAllocation = (
   const formattedAllocation: { [grantee: `0x${string}`]: number } =
     Object.fromEntries(
       allocation.grantees.map((g, index) => [
-        g.id as `0x${string}`,
+        g.account as `0x${string}`,
         Number(allocation.amounts[index]),
       ]),
     );

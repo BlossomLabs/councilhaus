@@ -7,6 +7,7 @@ import {
   CouncilMemberRemoved,
   GranteeAdded,
   GranteeRemoved,
+  MaxAllocationsPerMemberSet,
 } from "../generated/templates/Council/Council";
 
 export function createCouncilCreatedEvent(
@@ -110,6 +111,22 @@ export function createBudgetAllocatedEvent(
     new ethereum.EventParam(
       "allocation",
       ethereum.Value.fromTuple(changetype<ethereum.Tuple>(allocation)),
+    ),
+  );
+  return event;
+}
+
+export function createMaxAllocationsPerMemberSetEvent(
+  council: Address,
+  maxAllocationsPerMember: BigInt,
+): MaxAllocationsPerMemberSet {
+  const event = changetype<MaxAllocationsPerMemberSet>(newMockEvent());
+  event.address = council;
+  event.parameters = new Array();
+  event.parameters.push(
+    new ethereum.EventParam(
+      "maxAllocationsPerMember",
+      ethereum.Value.fromI32(maxAllocationsPerMember.toI32()),
     ),
   );
   return event;

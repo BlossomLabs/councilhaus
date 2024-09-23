@@ -1,4 +1,4 @@
-import { Address, ethereum } from "@graphprotocol/graph-ts";
+import { Address, BigInt, ethereum } from "@graphprotocol/graph-ts";
 import {
   assert,
   afterAll,
@@ -8,8 +8,12 @@ import {
   mockFunction,
   test,
 } from "matchstick-as/assembly/index";
+import { handleMaxAllocationsPerMemberSet } from "../src/council";
 import { handleCouncilCreated } from "../src/council-factory";
-import { createCouncilCreatedEvent } from "./utils";
+import {
+  createCouncilCreatedEvent,
+  createMaxAllocationsPerMemberSetEvent,
+} from "./utils";
 
 describe("Describe entity assertions", () => {
   beforeAll(() => {
@@ -52,6 +56,14 @@ describe("Describe entity assertions", () => {
       ],
       false,
     );
+    mockFunction(
+      councilAddress,
+      "maxAllocationsPerMember",
+      "maxAllocationsPerMember():(uint8)",
+      [],
+      [ethereum.Value.fromI32(10)],
+      false,
+    );
 
     handleCouncilCreated(newCouncilCreatedEvent);
   });
@@ -78,6 +90,31 @@ describe("Describe entity assertions", () => {
       councilId,
       "distributionToken",
       "0x0000000000000000000000000000000000000003",
+    );
+    assert.fieldEquals("Council", councilId, "maxAllocationsPerMember", "10");
+  });
+
+  test("Max allocations per member set", () => {
+    const councilAddress = Address.fromString(
+      "0x0000000000000000000000000000000000000001",
+    );
+    const newMaxAllocationsPerMemberSetEvent =
+      createMaxAllocationsPerMemberSetEvent(councilAddress, BigInt.fromI32(3));
+    handleMaxAllocationsPerMemberSet(newMaxAllocationsPerMemberSetEvent);
+
+    assert.fieldEquals(
+      "Council",
+      councilAddress.toHexString(),
+      "maxAllocationsPerMember",
+      "3",
+    );
+
+    // Test a non-existing council should not fail
+    handleMaxAllocationsPerMemberSet(
+      createMaxAllocationsPerMemberSetEvent(
+        Address.fromString("0x0000000000000000000000000000000000000004"),
+        BigInt.fromI32(3),
+      ),
     );
   });
 });

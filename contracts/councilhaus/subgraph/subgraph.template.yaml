@@ -59,4 +59,6 @@ templates:
           handler: handleGranteeRemoved
         - event: BudgetAllocated(address,(address[],uint128[]))
           handler: handleBudgetAllocated
+        - event: MaxAllocationsPerMemberSet(uint8)
+          handler: handleMaxAllocationsPerMemberSet
       file: ./src/council.ts
