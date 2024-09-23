@@ -5,7 +5,7 @@ import { getDefaultConfig } from "@rainbow-me/rainbowkit";
 import { createPublicClient } from "viem";
 import { http, createConfig } from "wagmi";
 import { mainnet, optimism } from "wagmi/chains";
-import { SITE_NAME } from "../constants";
+import { SITE_NAME } from "../../../../constants";
 
 export const WALLETCONNECT_PROJECT_ID =
   process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? "";

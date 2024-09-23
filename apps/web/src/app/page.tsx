@@ -4,12 +4,11 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getAddress } from "viem";
 import { useAccount } from "wagmi";
+import { DEFAULT_COUNCIL_ADDRESS } from "../../../../constants";
 import { CouncilName } from "../components/CouncilName";
 import VotingCard from "../components/VotingCard";
 import { useAllocation } from "../hooks/useAllocation";
 import { useCouncil } from "../hooks/useCouncil";
-
-const defaultCouncil = "0x5cE162b6e6Dd6B936B9dC183Df79F61DBf8c675f";
 
 export default function Page() {
   const router = useRouter();
@@ -18,11 +17,11 @@ export default function Page() {
   useEffect(() => {
     // Ensure the code runs only on the client side
     if (!window.location.hash) {
-      router.push(`#${defaultCouncil}`);
+      router.push(`#${DEFAULT_COUNCIL_ADDRESS}`);
     }
     // Set the council value once the hash is present
     const address = getAddress(
-      window.location.hash?.slice(1) || defaultCouncil,
+      window.location.hash?.slice(1) || DEFAULT_COUNCIL_ADDRESS,
     );
     setCouncil(address);
   }, [router]);

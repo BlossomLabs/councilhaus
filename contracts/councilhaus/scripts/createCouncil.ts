@@ -1,12 +1,13 @@
 import { viem } from "hardhat";
 import { parseEventLogs } from "viem";
+import { COUNCIL_FACTORY_ADDRESS } from "../../../constants";
 
 async function main() {
   const publicClient = await viem.getPublicClient();
 
   const councilFactory = await viem.getContractAt(
     "CouncilFactory",
-    "0x4f875b97cf4edb0d1d561a3d1926ed6663df08b2",
+    COUNCIL_FACTORY_ADDRESS,
   );
 
   const hash = await councilFactory.write.createCouncil([

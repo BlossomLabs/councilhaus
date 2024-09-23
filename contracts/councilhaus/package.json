@@ -12,6 +12,7 @@
   "scripts": {
     "compile": "hardhat compile",
     "deploy": "hardhat run scripts/deploy.ts",
+    "verify": "hardhat verify --network optimism",
     "dev": "hardhat node",
     "test": "hardhat test --network hardhat",
     "test:coverage": "SOLIDITY_COVERAGE=true hardhat coverage"

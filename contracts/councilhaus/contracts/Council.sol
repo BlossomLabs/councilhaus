@@ -24,7 +24,6 @@ struct Allocation {
 contract Council is NonTransferableToken, AccessControl, PoolManager {
     // Custom error definitions
     error InvalidMaxAllocations();
-    error FlowRateMustBePositive();
     error CouncilMemberAlreadyAdded();
     error CouncilMemberNotFound();
     error TooManyAllocations();
@@ -36,13 +35,11 @@ contract Council is NonTransferableToken, AccessControl, PoolManager {
 
     // Event definitions
     event MaxAllocationsPerMemberSet(uint8 maxAllocationsPerMember);
-    event FlowRateSet(int96 flowRate);
     event CouncilMemberAdded(address member, uint256 votingPower);
     event CouncilMemberRemoved(address member);
     event GranteeAdded(string name, address grantee);
     event GranteeRemoved(address grantee);
     event BudgetAllocated(address member, Allocation allocation);
-    event BudgetExecuted();
     event Withdrawn(address token, address account, uint256 amount);
 
     // Constants
@@ -75,8 +72,6 @@ contract Council is NonTransferableToken, AccessControl, PoolManager {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(MEMBER_MANAGER_ROLE, msg.sender);
         _grantRole(GRANTEE_MANAGER_ROLE, msg.sender);
-
-        emit MaxAllocationsPerMemberSet(MAX_ALLOCATIONS_PER_MEMBER);
     }
 
     /**
