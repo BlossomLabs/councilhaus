@@ -82,8 +82,10 @@ const VotingCard = ({
           <>
             <div className="flex justify-between">
               <h4 className="h-12 text-xl mb-6 text-accent">
-                Cast Your Vote ({votedProjects.length} / {maxVotedProjects}{" "}
-                projects)
+                Cast Your Vote{" "}
+                {projects.length > maxVotedProjects
+                  ? `(${votedProjects.length} / ${maxVotedProjects} projects)`
+                  : ""}
               </h4>
               <div className="text-sm mt-2">
                 Used {totalVotes} / {votingPower}

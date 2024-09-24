@@ -4,12 +4,11 @@ import "@rainbow-me/rainbowkit/styles.css";
 import { getDefaultConfig } from "@rainbow-me/rainbowkit";
 import { createPublicClient } from "viem";
 import { http, createConfig } from "wagmi";
-import { mainnet } from "wagmi/chains";
+import { base, mainnet, optimism } from "wagmi/chains";
 import { SITE_NAME } from "../../../../constants";
 
-import * as chains from "wagmi/chains";
 import { NETWORK } from "../../../../constants";
-const chain = chains[NETWORK];
+const chain = NETWORK === "optimism" ? optimism : base;
 
 export const WALLETCONNECT_PROJECT_ID =
   process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? "";
