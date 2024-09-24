@@ -50,3 +50,7 @@ logs
 .bin
 .latest.json
 .docker
+
+# Hardhat ignition
+build-info
+journal.jsonl

@@ -11,8 +11,8 @@
   },
   "scripts": {
     "compile": "hardhat compile",
-    "deploy": "hardhat run scripts/deploy.ts",
-    "verify": "hardhat verify --network optimism",
+    "deploy:optimism": "hardhat ignition deploy ignition/modules/CouncilFactory.ts --network optimism --strategy create2 --parameters ignition/parameters/optimism.json",
+    "deploy:base": "hardhat ignition deploy ignition/modules/CouncilFactory.ts --network base --strategy create2 --parameters ignition/parameters/base.json",
     "dev": "hardhat node",
     "test": "hardhat test --network hardhat",
     "test:coverage": "SOLIDITY_COVERAGE=true hardhat coverage"

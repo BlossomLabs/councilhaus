@@ -7,8 +7,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getAddress } from "viem";
-import { useAccount } from "wagmi";
-import { DEFAULT_COUNCIL_ADDRESS } from "../../../../constants";
+import { useAccount, useChains } from "wagmi";
+import { DEFAULT_COUNCIL_ADDRESS, NETWORK } from "../../../../constants";
 import { CouncilName } from "../components/CouncilName";
 import VotingCard from "../components/VotingCard";
 import { useAllocation } from "../hooks/useAllocation";
@@ -46,13 +46,12 @@ export default function Page() {
     (acc, curr) => acc + Number(curr.votingPower),
     0,
   );
-  console.log(totalVotingPower);
 
   return (
     <main>
       <ContractLinks council={council} pool={pool} />
       <Link
-        href={`https://explorer.superfluid.finance/optimism-mainnet/accounts/${council}?tab=pools`}
+        href={`https://explorer.superfluid.finance/${NETWORK}-mainnet/accounts/${council}?tab=pools`}
         target="_blank"
       >
         <CouncilName
@@ -92,22 +91,19 @@ function ContractLinks({
   council,
   pool,
 }: { council: string | undefined; pool: string | undefined }) {
+  const chains = useChains();
+  const chain = chains[0]; // It should be the one defined in NETWORK
+  const explorer = chain?.blockExplorers?.default.url;
   return (
     <div className="flex flex-row gap-1 mb-4 items-center justify-end">
       <Label className="pr-2">Contracts: </Label>
       <Badge variant="outline">
-        <Link
-          href={`https://explorer.optimism.io/address/${council}`}
-          target="_blank"
-        >
+        <Link href={`${explorer}/address/${council}`} target="_blank">
           Council
         </Link>
       </Badge>
       <Badge variant="outline">
-        <Link
-          href={`https://explorer.optimism.io/address/${pool}`}
-          target="_blank"
-        >
+        <Link href={`${explorer}/address/${pool}`} target="_blank">
           Pool
         </Link>
       </Badge>

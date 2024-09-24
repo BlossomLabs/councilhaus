@@ -42,7 +42,7 @@ async function main() {
           account: "0xeafFF6dB1965886348657E79195EB6f1A84657eB",
         },
       ],
-      distributionToken: "0x7d342726b69c28d942ad8bfe6ac81b972349d524", // DAIx
+      distributionToken: "0x708169c8C87563Ce904E0a7F3BFC1F3b0b767f41", // DAIx
     },
   ]);
 

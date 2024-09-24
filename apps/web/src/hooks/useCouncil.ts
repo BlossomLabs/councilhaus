@@ -3,7 +3,7 @@ import { gql, request } from "graphql-request";
 
 export const useCouncil = (council: `0x${string}` | undefined) => {
   const url =
-    "https://api.goldsky.com/api/public/project_cm10r8z66lbri01se6301ddxj/subgraphs/councilhaus/0.0.2/gn";
+    "https://api.goldsky.com/api/public/project_cm10r8z66lbri01se6301ddxj/subgraphs/councilhaus-base/0.0.2/gn";
   const query = gql`
       query CouncilNameAndGrantees($council: String) {
         council(id: $council) {
