@@ -3,6 +3,7 @@
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Label } from "@repo/ui/components/ui/label";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
+import { cn } from "@repo/ui/lib/utils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -49,17 +50,16 @@ export default function Page() {
 
   return (
     <main>
-      <ContractLinks council={council} pool={pool} />
       <Link
         href={`https://explorer.superfluid.finance/${NETWORK}-mainnet/accounts/${council}?tab=pools`}
         target="_blank"
       >
         <CouncilName
           name={councilName}
-          className="h-12 text-4xl font-bold mb-4 text-accent"
+          className="min-h-12 text-4xl font-bold mb-4 text-accent text-center"
         />
       </Link>
-      <div className="flex flex-col gap-4 mb-4">
+      <div className="flex flex-col gap-4 mb-4 text-justify">
         {totalVotingPower ? (
           <p>
             You are 1 of {councilMembers?.length} council members, holding{" "}
@@ -83,6 +83,11 @@ export default function Page() {
         isLoading={isLoading || !council}
         votingPower={votingPower}
       />
+      <ContractLinks
+        council={council}
+        pool={pool}
+        className="mt-4 justify-center"
+      />
     </main>
   );
 }
@@ -90,12 +95,17 @@ export default function Page() {
 function ContractLinks({
   council,
   pool,
-}: { council: string | undefined; pool: string | undefined }) {
+  className,
+}: {
+  council: string | undefined;
+  pool: string | undefined;
+  className?: string;
+}) {
   const chains = useChains();
   const chain = chains[0]; // It should be the one defined in NETWORK
   const explorer = chain?.blockExplorers?.default.url;
   return (
-    <div className="flex flex-row gap-1 mb-4 items-center justify-end">
+    <div className={cn("flex flex-row gap-1 mb-4 items-center", className)}>
       <Label className="pr-2">Contracts: </Label>
       <Badge variant="outline">
         <Link href={`${explorer}/address/${council}`} target="_blank">

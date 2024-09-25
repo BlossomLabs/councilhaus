@@ -81,14 +81,19 @@ const VotingCard = ({
         ) : (
           <>
             <div className="flex justify-between">
-              <h4 className="h-12 text-xl mb-6 text-accent">
+              <h4 className="h-12 text-xl mb-6 text-accent flex-wrap">
                 Cast Your Vote{" "}
-                {projects.length > maxVotedProjects
-                  ? `(${votedProjects.length} / ${maxVotedProjects} projects)`
-                  : ""}
+                {projects.length > maxVotedProjects ? (
+                  <span className="text-nowrap text-sm">
+                    ({votedProjects.length} / {maxVotedProjects} projects)
+                  </span>
+                ) : null}
               </h4>
               <div className="text-sm mt-2">
-                Used {totalVotes} / {votingPower}
+                Used{" "}
+                <span className="text-nowrap">
+                  {totalVotes} / {votingPower}
+                </span>
               </div>
             </div>
             {projects.map((project) => {
@@ -98,7 +103,9 @@ const VotingCard = ({
                   key={project.account}
                   className="flex items-center justify-between mb-3"
                 >
-                  <span className="flex-grow">{project.name}</span>
+                  <span className="flex-grow text-ellipsis overflow-hidden">
+                    {project.name}
+                  </span>
                   <div className="flex items-center">
                     <Button
                       disabled={voteCount <= 0}
@@ -143,7 +150,7 @@ const VotingCard = ({
                     >
                       +
                     </Button>
-                    <span className="w-12 text-right">
+                    <span className="w-12 text-right hidden sm:block">
                       {totalVotes > 0
                         ? Math.round((voteCount / votingPower) * 100)
                         : 0}
