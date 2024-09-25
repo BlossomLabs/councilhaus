@@ -61,12 +61,30 @@ export default function Page() {
       </Link>
       <div className="flex flex-col gap-4 mb-4 text-justify">
         {totalVotingPower ? (
-          <p>
-            You are 1 of {councilMembers?.length} council members, holding{" "}
-            {((votingPower / totalVotingPower) * 100).toFixed(2)}% of the total
-            voting power. Your vote plays a significant role in determining how
-            the budget is allocated to projects. Use your influence wisely.
-          </p>
+          !address ? (
+            <p className="text-center">
+              Connect your wallet to view your voting power and budget
+              allocation.
+            </p>
+          ) : (
+            <>
+              {votingPower ? (
+                <p>
+                  You are 1 of {councilMembers?.length} council members, holding{" "}
+                  {((votingPower / totalVotingPower) * 100).toFixed(2)}% of the
+                  total voting power. Your vote plays a significant role in
+                  determining how the budget is allocated to projects. Use your
+                  influence wisely.
+                </p>
+              ) : (
+                <p>
+                  You are not currently a council member. Only council members
+                  have voting power and can influence budget allocations. Stay
+                  tuned for future opportunities to join the council.
+                </p>
+              )}
+            </>
+          )
         ) : (
           <>
             <Skeleton className="h-4 w-full" />

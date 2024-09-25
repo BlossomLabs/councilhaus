@@ -173,7 +173,7 @@ function VoteControls({
           onChange={(e) =>
             handleVote(project.account, Number.parseInt(e.target.value))
           }
-          className="w-16 bg-gray-600 text-center text-white rounded-none px-3 py-1 input-number-hide-arrows border-none focus-visible:ring-0 focus-visible:ring-offset-0"
+          className="w-16 bg-gray-600 text-center text-white rounded-none px-3 py-1 input-number-hide-arrows border-none focus-visible:ring-0 focus-visible:ring-offset-0 disabled:cursor-default"
         />
         <Button
           disabled={
