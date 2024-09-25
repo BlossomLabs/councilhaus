@@ -27,7 +27,7 @@ const config = {
       colors: {
         border: colors.yellow[500],
         input: colors.gray[800],
-        ring: colors.gray[800],
+        ring: colors.yellow[800],
         background: colors.gray[800],
         foreground: colors.gray[100],
         primary: {

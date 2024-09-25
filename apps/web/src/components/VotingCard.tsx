@@ -54,17 +54,19 @@ const VotingCard = ({
   }, [initialAllocation, projects]);
 
   // Array of project addresses that have been voted on
-  const votedProjects = Object.keys(votes).filter(
-    (grantee) => (votes[grantee as `0x${string}`] ?? 0) > 0,
+  const votedProjects = (Object.keys(votes) as `0x${string}`[]).filter(
+    (grantee) => (votes[grantee] ?? 0) > 0,
   );
 
   const totalVotes = Object.values(votes).reduce((a, b) => a + b, 0);
 
   const handleVote = (grantee: `0x${string}`, value: number) => {
-    const newValue = Math.max(0, value || 0);
     setVotes((prev) => ({
       ...prev,
-      [grantee]: newValue,
+      [grantee]: Math.max(
+        0,
+        Math.min(value || 0, votingPower - totalVotes + (prev[grantee] || 0)),
+      ),
     }));
   };
 
@@ -97,7 +99,6 @@ const VotingCard = ({
               </div>
             </div>
             {projects.map((project) => {
-              const voteCount = votes[project.account] || 0;
               return (
                 <div
                   key={project.account}
@@ -106,57 +107,15 @@ const VotingCard = ({
                   <span className="flex-grow text-ellipsis overflow-hidden">
                     {project.name}
                   </span>
-                  <div className="flex items-center">
-                    <Button
-                      disabled={voteCount <= 0}
-                      onClick={() =>
-                        handleVote(
-                          project.account,
-                          Math.max(0, voteCount - Math.floor(votingPower / 10)),
-                        )
-                      }
-                      className="bg-gray-700 w-8 py-1 text-white hover:bg-gray-500 rounded-r-none"
-                    >
-                      -
-                    </Button>
-                    <Input
-                      type="number"
-                      value={voteCount}
-                      onChange={(e) =>
-                        handleVote(
-                          project.account,
-                          Number.parseInt(e.target.value),
-                        )
-                      }
-                      className="w-16 bg-gray-600 text-center text-white rounded-none px-3 py-1 input-number-hide-arrows border-none"
-                    />
-                    <Button
-                      disabled={
-                        (votedProjects.length >= maxVotedProjects &&
-                          !votes[project.account]) ||
-                        totalVotes >= votingPower
-                      }
-                      onClick={() =>
-                        handleVote(
-                          project.account,
-                          voteCount +
-                            Math.min(
-                              votingPower - totalVotes,
-                              Math.floor(votingPower / 10),
-                            ),
-                        )
-                      }
-                      className="bg-gray-700 w-8 py-1 text-white hover:bg-gray-500 rounded-l-none"
-                    >
-                      +
-                    </Button>
-                    <span className="w-12 text-right hidden sm:block">
-                      {totalVotes > 0
-                        ? Math.round((voteCount / votingPower) * 100)
-                        : 0}
-                      %
-                    </span>
-                  </div>
+                  <VoteControls
+                    project={project}
+                    votes={votes}
+                    handleVote={handleVote}
+                    votingPower={votingPower}
+                    maxVotedProjects={maxVotedProjects}
+                    votedProjects={votedProjects}
+                    totalVotes={totalVotes}
+                  />
                 </div>
               );
             })}
@@ -173,6 +132,72 @@ const VotingCard = ({
     </Card>
   );
 };
+
+function VoteControls({
+  project,
+  votes,
+  handleVote,
+  votingPower,
+  maxVotedProjects,
+  votedProjects,
+  totalVotes,
+}: {
+  project: Project;
+  votes: Allocation;
+  handleVote: (grantee: `0x${string}`, value: number) => void;
+  votingPower: number;
+  maxVotedProjects: number;
+  votedProjects: `0x${string}`[];
+  totalVotes: number;
+}) {
+  const voteCount = votes[project.account] || 0;
+  return (
+    <>
+      <div className="flex items-center">
+        <Button
+          disabled={voteCount <= 0}
+          onClick={() =>
+            handleVote(
+              project.account,
+              voteCount - Math.floor(votingPower / 10),
+            )
+          }
+          className="bg-gray-700 w-8 py-1 text-white hover:bg-gray-500 rounded-r-none"
+        >
+          -
+        </Button>
+        <Input
+          disabled={!votingPower}
+          type="number"
+          value={voteCount}
+          onChange={(e) =>
+            handleVote(project.account, Number.parseInt(e.target.value))
+          }
+          className="w-16 bg-gray-600 text-center text-white rounded-none px-3 py-1 input-number-hide-arrows border-none focus-visible:ring-0 focus-visible:ring-offset-0"
+        />
+        <Button
+          disabled={
+            (votedProjects.length >= maxVotedProjects &&
+              !votes[project.account]) ||
+            totalVotes >= votingPower
+          }
+          onClick={() =>
+            handleVote(
+              project.account,
+              voteCount + Math.floor(votingPower / 10),
+            )
+          }
+          className="bg-gray-700 w-8 py-1 text-white hover:bg-gray-500 rounded-l-none"
+        >
+          +
+        </Button>
+        <span className="w-12 text-right hidden sm:block">
+          {totalVotes > 0 ? Math.round((voteCount / votingPower) * 100) : 0}%
+        </span>
+      </div>
+    </>
+  );
+}
 
 function SkeletonVote() {
   return (
