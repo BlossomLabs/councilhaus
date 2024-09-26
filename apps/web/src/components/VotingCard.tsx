@@ -10,7 +10,7 @@ import {
 } from "@repo/ui/components/ui/card";
 import { Input } from "@repo/ui/components/ui/input";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import VotingButton from "./VotingButton";
 
 type Project = { account: `0x${string}`; name: string };
@@ -33,6 +33,11 @@ const VotingCard = ({
   maxVotedProjects?: number;
   isLoading: boolean;
 }) => {
+  const randomizedProjects = useMemo(
+    () => [...projects].sort(() => Math.random() - 0.5),
+    [projects],
+  );
+
   const [votes, setVotes] = useState<Allocation>(
     Object.fromEntries(
       projects.map((project) => [
@@ -98,7 +103,7 @@ const VotingCard = ({
                 </span>
               </div>
             </div>
-            {projects.map((project) => {
+            {randomizedProjects.map((project) => {
               return (
                 <div
                   key={project.account}
