@@ -34,7 +34,7 @@ export const useAllocation = (
       amounts: string[];
     }[];
   }>({
-    queryKey: ["allocation"],
+    queryKey: ["allocation", council, councilMember],
     async queryFn() {
       return await request(url, query, {
         council: council?.toLowerCase(),

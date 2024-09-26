@@ -35,7 +35,7 @@ export const useCouncil = (council: `0x${string}` | undefined) => {
       pool: string;
     };
   }>({
-    queryKey: ["data"],
+    queryKey: ["council", council],
     async queryFn() {
       return await request(url, query, { council: council?.toLowerCase() });
     },

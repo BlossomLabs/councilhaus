@@ -167,7 +167,11 @@ function VoteControls({
           -
         </Button>
         <Input
-          disabled={!votingPower}
+          disabled={
+            !votingPower ||
+            (votedProjects.length >= maxVotedProjects &&
+              !votes[project.account])
+          }
           type="number"
           value={voteCount}
           onChange={(e) =>
