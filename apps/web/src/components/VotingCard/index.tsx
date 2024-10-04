@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@repo/ui/components/ui/button";
 import {
   Card,
   CardContent,
@@ -8,10 +7,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@repo/ui/components/ui/card";
-import { Input } from "@repo/ui/components/ui/input";
-import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import React, { useEffect, useMemo, useState } from "react";
-import VotingButton from "./VotingButton";
+import VotingButton from "../VotingButton";
+import { SkeletonVote } from "./SkeletonVote";
+import { VoteInput } from "./VoteInput";
 
 type Project = { account: `0x${string}`; name: string };
 type Allocation = { [grantee: `0x${string}`]: number };
@@ -22,7 +21,7 @@ const VotingCard = ({
   projects,
   initialAllocation,
   votingPower,
-  maxVotedProjects = 3,
+  maxVotedProjects,
   isLoading = false,
 }: {
   className: string;
@@ -30,7 +29,7 @@ const VotingCard = ({
   projects: Project[];
   initialAllocation: Allocation | undefined;
   votingPower: number;
-  maxVotedProjects?: number;
+  maxVotedProjects: number;
   isLoading: boolean;
 }) => {
   const randomizedProjects = useMemo(
@@ -68,11 +67,20 @@ const VotingCard = ({
   const handleVote = (grantee: `0x${string}`, value: number) => {
     setVotes((prev) => ({
       ...prev,
-      [grantee]: Math.max(
-        0,
-        Math.min(value || 0, votingPower - totalVotes + (prev[grantee] || 0)),
-      ),
+      [grantee]: value,
     }));
+  };
+
+  const calculateProjectVotingDetails = (project: `0x${string}`) => {
+    const voteCount = votes[project] || 0;
+    const totalVotesExcludingCurrentProject = totalVotes - voteCount;
+    const remainingVotingPowerForThisProject =
+      votingPower - totalVotesExcludingCurrentProject;
+    const maxVoteForProject = Math.max(0, remainingVotingPowerForThisProject);
+    const disabled =
+      !votingPower ||
+      (votedProjects.length >= maxVotedProjects && voteCount === 0);
+    return { voteCount, maxVoteForProject, disabled };
   };
 
   return (
@@ -104,6 +112,8 @@ const VotingCard = ({
               </div>
             </div>
             {randomizedProjects.map((project) => {
+              const { voteCount, maxVoteForProject, disabled } =
+                calculateProjectVotingDetails(project.account);
               return (
                 <div
                   key={project.account}
@@ -112,14 +122,15 @@ const VotingCard = ({
                   <span className="flex-grow text-ellipsis overflow-hidden">
                     {project.name}
                   </span>
-                  <VoteControls
-                    project={project}
-                    votes={votes}
-                    handleVote={handleVote}
-                    votingPower={votingPower}
-                    maxVotedProjects={maxVotedProjects}
-                    votedProjects={votedProjects}
-                    totalVotes={totalVotes}
+                  <VoteInput
+                    value={voteCount}
+                    onChange={(newValue) =>
+                      handleVote(project.account, newValue)
+                    }
+                    max={maxVoteForProject}
+                    total={votingPower}
+                    increment={Math.floor(votingPower / 10)}
+                    disabled={disabled}
                   />
                 </div>
               );
@@ -137,92 +148,5 @@ const VotingCard = ({
     </Card>
   );
 };
-
-function VoteControls({
-  project,
-  votes,
-  handleVote,
-  votingPower,
-  maxVotedProjects,
-  votedProjects,
-  totalVotes,
-}: {
-  project: Project;
-  votes: Allocation;
-  handleVote: (grantee: `0x${string}`, value: number) => void;
-  votingPower: number;
-  maxVotedProjects: number;
-  votedProjects: `0x${string}`[];
-  totalVotes: number;
-}) {
-  const voteCount = votes[project.account] || 0;
-  return (
-    <>
-      <div className="flex items-center">
-        <Button
-          disabled={voteCount <= 0}
-          onClick={() =>
-            handleVote(
-              project.account,
-              voteCount - Math.floor(votingPower / 10),
-            )
-          }
-          className="bg-gray-700 w-8 py-1 text-white hover:bg-gray-500 rounded-r-none"
-        >
-          -
-        </Button>
-        <Input
-          disabled={
-            !votingPower ||
-            (votedProjects.length >= maxVotedProjects &&
-              !votes[project.account])
-          }
-          type="number"
-          value={voteCount}
-          onChange={(e) =>
-            handleVote(project.account, Number.parseInt(e.target.value))
-          }
-          className="w-16 bg-gray-600 text-center text-white rounded-none px-3 py-1 input-number-hide-arrows border-none focus-visible:ring-0 focus-visible:ring-offset-0 disabled:cursor-default"
-        />
-        <Button
-          disabled={
-            (votedProjects.length >= maxVotedProjects &&
-              !votes[project.account]) ||
-            totalVotes >= votingPower
-          }
-          onClick={() =>
-            handleVote(
-              project.account,
-              voteCount + Math.floor(votingPower / 10),
-            )
-          }
-          className="bg-gray-700 w-8 py-1 text-white hover:bg-gray-500 rounded-l-none"
-        >
-          +
-        </Button>
-        <span className="w-12 text-right hidden sm:block">
-          {totalVotes > 0 ? Math.round((voteCount / votingPower) * 100) : 0}%
-        </span>
-      </div>
-    </>
-  );
-}
-
-function SkeletonVote() {
-  return (
-    <div className="flex flex-col space-y-3">
-      <div className="h-12 flex justify-between items-center">
-        <Skeleton className="w-3/5 h-5" />
-        <Skeleton className="w-1/5 h-3" />
-      </div>
-
-      <div className="space-y-2 mt-4">
-        <Skeleton className="h-10" />
-        <Skeleton className="h-10" />
-        <Skeleton className="h-10" />
-      </div>
-    </div>
-  );
-}
 
 export default VotingCard;
