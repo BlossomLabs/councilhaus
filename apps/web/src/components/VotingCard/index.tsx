@@ -37,6 +37,21 @@ const VotingCard = ({
     [projects],
   );
 
+  // TODO: Remove this once we have a way to rename projects
+  const mapping: { [key: string]: string } = {
+    Lee: "Zenidrop by Lee",
+    "Bruno & team": "AstroBlock by Bruno team",
+    SenSpace: "SenSpace by SenSpace team",
+    MarkCarey: "Pixel Nouns by Mark",
+    "Dayitva & team": "Superboring Incentive by Dayitva team",
+    "Nikku & team": "Buzzfi by Nikko team",
+  };
+
+  const renamedProjects = randomizedProjects.map((project) => ({
+    ...project,
+    name: mapping[project.name] ?? project.name,
+  }));
+
   const [votes, setVotes] = useState<Allocation>(
     Object.fromEntries(
       projects.map((project) => [
@@ -111,7 +126,7 @@ const VotingCard = ({
                 </span>
               </div>
             </div>
-            {randomizedProjects.map((project) => {
+            {renamedProjects.map((project) => {
               const { voteCount, maxVoteForProject, disabled } =
                 calculateProjectVotingDetails(project.account);
               return (
