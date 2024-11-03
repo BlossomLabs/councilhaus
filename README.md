@@ -64,7 +64,7 @@ The smart contracts are in the `contracts` directory, and the frontend is in the
   ```
 
 - **Publish Directory:**  
-  `apps/web/build`
+  `apps/web/build/client`
 
 ### Environment Variables
 
