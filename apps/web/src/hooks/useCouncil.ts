@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { gql, request } from "graphql-request";
+import { getCouncilImage } from "../utils/council";
 
 export const useCouncil = (council: `0x${string}` | undefined) => {
   const url =
@@ -41,8 +42,11 @@ export const useCouncil = (council: `0x${string}` | undefined) => {
     },
     enabled: !!council,
   });
+
+  const councilImage = getCouncilImage(council);
   return {
     councilName: data?.council?.councilName,
+    councilImage,
     councilMembers: data?.council?.councilMembers.filter((m) => m.enabled),
     grantees: data?.council?.grantees.filter((g) => g.enabled),
     maxAllocationsPerMember: data?.council?.maxAllocationsPerMember,

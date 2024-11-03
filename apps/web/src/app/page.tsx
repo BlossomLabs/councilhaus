@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { getAddress } from "viem";
 import { useAccount, useChains } from "wagmi";
 import { DEFAULT_COUNCIL_ADDRESS, NETWORK } from "../../../../constants";
+import { CouncilImage } from "../components/CouncilImage";
 import { CouncilName } from "../components/CouncilName";
 import VotingCard from "../components/VotingCard";
 import { useAllocation } from "../hooks/useAllocation";
@@ -35,6 +36,7 @@ export default function Page() {
   const { address } = useAccount();
   const {
     councilName,
+    councilImage,
     councilMembers,
     grantees,
     maxAllocationsPerMember,
@@ -54,6 +56,7 @@ export default function Page() {
         href={`https://explorer.superfluid.finance/${NETWORK}-mainnet/accounts/${council}?tab=pools`}
         target="_blank"
       >
+        <CouncilImage image={councilImage} />
         <CouncilName
           name={councilName}
           className="min-h-12 text-4xl font-bold mb-4 text-accent text-center"
