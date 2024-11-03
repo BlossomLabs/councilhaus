@@ -101,7 +101,7 @@ const VotingCard = ({
   return (
     <Card className={className}>
       <CardHeader>
-        <CardTitle className="font-heading font-medium tracking-wider">
+        <CardTitle className="font-medium tracking-wider">
           Which project is doing better?
         </CardTitle>
       </CardHeader>

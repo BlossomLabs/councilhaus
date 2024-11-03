@@ -23,8 +23,6 @@ coverage.json
 .vercel
 
 # Build Outputs
-.next/
-out/
 build
 dist
 

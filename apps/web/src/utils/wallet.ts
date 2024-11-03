@@ -11,10 +11,10 @@ import { NETWORK } from "../../../../constants";
 const chain = NETWORK === "optimism" ? optimism : base;
 
 export const WALLETCONNECT_PROJECT_ID =
-  process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? "";
+  import.meta.env.VITE_WALLETCONNECT_PROJECT_ID ?? "";
 if (!WALLETCONNECT_PROJECT_ID) {
   console.warn(
-    "You need to provide a NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID env variable",
+    "You need to provide a VITE_WALLETCONNECT_PROJECT_ID env variable",
   );
 }
 
@@ -24,7 +24,7 @@ export const WALLETCONNECT_CONFIG: RainbowKitConfig = getDefaultConfig({
   appName: SITE_NAME,
   projectId: WALLETCONNECT_PROJECT_ID || "dummy",
   chains: [chain],
-  ssr: true,
+  ssr: false,
 });
 
 export const mainnetConfig = createConfig({

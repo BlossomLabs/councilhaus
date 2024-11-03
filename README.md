@@ -47,3 +47,25 @@ bun run dev
 The development server will be available at http://localhost:3000/.
 
 The smart contracts are in the `contracts` directory, and the frontend is in the `apps` directory.
+
+## How to deploy
+
+### Build Settings
+
+- **Docker Image:**
+  `node:lts`
+
+- **Repository:**  
+  [https://github.com/BlossomLabs/councilhaus](https://github.com/BlossomLabs/councilhaus)
+
+- **Build Command:**  
+  ```bash
+  npm install -g bun && HUSKY=0 bun i && bun run --cwd apps/web/ build
+  ```
+
+- **Publish Directory:**  
+  `apps/web/build`
+
+### Environment Variables
+
+- Use `VITE_WALLETCONNECT_PROJECT_ID` for your wallet connect project ID.

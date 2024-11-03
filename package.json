@@ -10,8 +10,8 @@
     "format-and-lint:fix": "biome check . --write",
     "ui": "bun run --cwd packages/ui ui",
     "prepare": "husky",
-    "install:web": "bun run --cwd apps/web install",
-    "install:contracts": "bun run --cwd contracts/councilhaus install"
+    "install:web": "bun install --cwd apps/web",
+    "install:contracts": "bun install --cwd contracts/councilhaus"
   },
   "devDependencies": {
     "@biomejs/biome": "1.8.3",
@@ -22,7 +22,7 @@
   "engines": {
     "node": ">=18"
   },
-  "packageManager": "bun@1.1.4",
+  "packageManager": "bun@1.1.10",
   "workspaces": ["apps/*", "contracts/*", "packages/*"],
   "license": "AGPL-3.0-or-later"
 }

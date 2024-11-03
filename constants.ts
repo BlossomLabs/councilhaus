@@ -1,6 +1,10 @@
 export const SITE_NAME = "Councilhaus";
 export const SITE_DESCRIPTION =
   "Democratically allocate a budget across projects";
+export const SITE_EMOJI = "🏜️";
+export const SITE_URL = "https://council.haus";
+export const SOCIAL_TWITTER = "blossom_labs";
+export const SOCIAL_GITHUB = "BlossomLabs/councilhaus";
 
 export const DEFAULT_COUNCIL_ADDRESS =
   "0xfa942226e5dd1e2d4d99014982846786b09939da";

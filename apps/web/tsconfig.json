@@ -1,23 +1,25 @@
 {
-  "extends": "@repo/typescript-config/nextjs.json",
+  "include": ["env.d.ts", "**/*.ts", "**/*.tsx"],
   "compilerOptions": {
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
+    "lib": ["DOM", "DOM.Iterable", "ES2023"],
+    "types": ["@remix-run/node", "vite/client"],
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "jsx": "react-jsx",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "target": "ES2022",
+    "strict": true,
+    "allowJs": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
     "paths": {
-      "~/*": ["./*"]
-    }
-  },
-  "include": [
-    "next-env.d.ts",
-    "next.config.mjs",
-    "postcss.config.mjs",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts",
-    "build/types/**/*.ts"
-  ],
-  "exclude": ["node_modules"]
+      "@/*": ["./app/*"]
+    },
+
+    // Remix takes care of building everything in `remix build`.
+    "noEmit": true
+  }
 }

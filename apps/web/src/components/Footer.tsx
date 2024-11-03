@@ -1,5 +1,4 @@
 import { Button } from "@repo/ui/components/ui/button";
-import Link from "next/link";
 import React from "react";
 
 export default function Footer() {
@@ -9,17 +8,21 @@ export default function Footer() {
         <p className="text-md text-center text-gray-400">
           Built with ❤️ by{" "}
           <Button variant="link" className="text-gray-400 px-0 text-lg" asChild>
-            <Link href="https://blossom.software" target="_blank">
+            <a href="https://blossom.software" target="_blank" rel="noreferrer">
               Blossom Labs
-            </Link>
+            </a>
           </Button>
         </p>
         <p className="text-md text-center text-gray-400">
           ⚡️ Powered by{" "}
           <Button variant="link" className="text-gray-400 px-0 text-lg" asChild>
-            <Link href="https://superfluid.finance" target="_blank">
+            <a
+              href="https://superfluid.finance"
+              target="_blank"
+              rel="noreferrer"
+            >
               Superfluid
-            </Link>
+            </a>
           </Button>
         </p>
       </div>

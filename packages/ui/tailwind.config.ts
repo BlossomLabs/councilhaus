@@ -20,10 +20,10 @@ const config = {
         "2xl": "1400px",
       },
     },
+    fontFamily: {
+      newsreader: ["var(--font-newsreader)"],
+    },
     extend: {
-      fontFamily: {
-        newsreader: ["var(--font-newsreader)", "serif"],
-      },
       colors: {
         border: colors.yellow[500],
         input: colors.gray[800],

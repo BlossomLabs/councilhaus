@@ -1,37 +1,53 @@
 "use client";
 
+import { useParams } from "@remix-run/react";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Label } from "@repo/ui/components/ui/label";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { cn } from "@repo/ui/lib/utils";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { getAddress } from "viem";
 import { useAccount, useChains } from "wagmi";
-import { DEFAULT_COUNCIL_ADDRESS, NETWORK } from "../../../../constants";
-import { CouncilImage } from "../components/CouncilImage";
-import { CouncilName } from "../components/CouncilName";
-import VotingCard from "../components/VotingCard";
-import { useAllocation } from "../hooks/useAllocation";
-import { useCouncil } from "../hooks/useCouncil";
+import { NETWORK } from "../../../../../constants";
+import { CouncilImage } from "../../components/CouncilImage";
+import { CouncilName } from "../../components/CouncilName";
+import VotingCard from "../../components/VotingCard";
+import { useAllocation } from "../../hooks/useAllocation";
+import { useCouncil } from "../../hooks/useCouncil";
 
-export default function Page() {
-  const router = useRouter();
-  const [council, setCouncil] = useState<`0x${string}` | undefined>(undefined);
+export default function CouncilPage() {
+  const { chain, council } = useParams();
+  const navigate = useNavigate();
+  const normalizedAddress = council ? getAddress(council) : null;
 
   useEffect(() => {
-    // Ensure the code runs only on the client side
-    if (!window.location.hash) {
-      router.push(`#${DEFAULT_COUNCIL_ADDRESS}`);
+    // Redirect if the chain is unsupported
+    if (chain !== NETWORK) {
+      navigate("/404");
+      return;
     }
-    // Set the council value once the hash is present
-    const address = getAddress(
-      window.location.hash?.slice(1) || DEFAULT_COUNCIL_ADDRESS,
-    );
-    setCouncil(address);
-  }, [router]);
 
+    // Redirect if council address is invalid
+    if (!normalizedAddress) {
+      navigate("/404");
+      return;
+    }
+
+    // Redirect if the normalized address doesn't match the URL
+    if (normalizedAddress !== council) {
+      navigate(`/c/${chain}/${normalizedAddress}`, { replace: true });
+    }
+  }, [chain, council, normalizedAddress, navigate]);
+
+  if (!normalizedAddress) {
+    return null;
+  }
+
+  return <CouncilPageContent council={normalizedAddress} />;
+}
+
+function CouncilPageContent({ council }: { council: `0x${string}` }) {
   // Fetch data when the council is available
   const { address } = useAccount();
   const {
@@ -52,16 +68,17 @@ export default function Page() {
 
   return (
     <main>
-      <Link
+      <a
         href={`https://explorer.superfluid.finance/${NETWORK}-mainnet/accounts/${council}?tab=pools`}
         target="_blank"
+        rel="noreferrer"
       >
         <CouncilImage image={councilImage} />
         <CouncilName
           name={councilName}
           className="min-h-12 text-4xl font-semibold tracking-wider text-accent mb-4 text-center"
         />
-      </Link>
+      </a>
       <div className="flex flex-col gap-4 mt-4 mb-12 text-justify">
         {totalVotingPower ? (
           !address ? (
@@ -129,14 +146,22 @@ function ContractLinks({
     <div className={cn("flex flex-row gap-1 mb-4 items-center", className)}>
       <Label className="pr-2">Contracts: </Label>
       <Badge variant="outline">
-        <Link href={`${explorer}/address/${council}`} target="_blank">
+        <a
+          href={`${explorer}/address/${council}`}
+          target="_blank"
+          rel="noreferrer"
+        >
           Council
-        </Link>
+        </a>
       </Badge>
       <Badge variant="outline">
-        <Link href={`${explorer}/address/${pool}`} target="_blank">
+        <a
+          href={`${explorer}/address/${pool}`}
+          target="_blank"
+          rel="noreferrer"
+        >
           Pool
-        </Link>
+        </a>
       </Badge>
     </div>
   );
