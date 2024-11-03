@@ -59,10 +59,10 @@ export default function Page() {
         <CouncilImage image={councilImage} />
         <CouncilName
           name={councilName}
-          className="min-h-12 text-4xl font-bold mb-4 text-accent text-center"
+          className="min-h-12 text-4xl font-semibold tracking-wider text-accent mb-4 text-center"
         />
       </Link>
-      <div className="flex flex-col gap-4 mb-4 text-justify">
+      <div className="flex flex-col gap-4 mt-4 mb-12 text-justify">
         {totalVotingPower ? (
           !address ? (
             <p className="text-center">

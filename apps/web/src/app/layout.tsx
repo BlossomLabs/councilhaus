@@ -10,6 +10,7 @@ import { WalletProvider } from "../context/WalletProvider";
 
 const newsreader = Newsreader({
   subsets: ["latin"],
+  weight: ["400", "500", "600"],
   display: "swap",
   variable: "--font-newsreader",
 });
@@ -31,7 +32,7 @@ export default function RootLayout({
           <ToastProvider>
             <div className="flex flex-col min-h-screen">
               <Header />
-              <main className="flex-grow container max-w-4xl mx-auto">
+              <main className="flex-grow container max-w-4xl mx-auto pt-10 bg-[url('/bg.svg')] bg-contain bg-no-repeat">
                 {children}
               </main>
               <Toaster />

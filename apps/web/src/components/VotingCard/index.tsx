@@ -101,7 +101,9 @@ const VotingCard = ({
   return (
     <Card className={className}>
       <CardHeader>
-        <CardTitle>Which project is doing better?</CardTitle>
+        <CardTitle className="font-heading font-medium tracking-wider">
+          Which project is doing better?
+        </CardTitle>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -111,7 +113,7 @@ const VotingCard = ({
         ) : (
           <>
             <div className="flex justify-between">
-              <h4 className="h-12 text-xl mb-6 text-accent flex-wrap">
+              <h4 className="h-12 text-xl mb-6 text-accent flex-wrap font-medium tracking-wider">
                 Cast Your Vote{" "}
                 {projects.length > maxVotedProjects ? (
                   <span className="text-nowrap text-sm">
@@ -132,9 +134,9 @@ const VotingCard = ({
               return (
                 <div
                   key={project.account}
-                  className="flex items-center justify-between mb-3"
+                  className="flex items-center justify-between mb-3 min-h-12"
                 >
-                  <span className="flex-grow text-ellipsis overflow-hidden">
+                  <span className="flex-grow line-clamp-2 mr-2">
                     {project.name}
                   </span>
                   <VoteInput

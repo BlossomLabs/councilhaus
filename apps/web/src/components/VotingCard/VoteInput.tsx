@@ -1,5 +1,6 @@
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
+import { Minus, Plus } from "lucide-react";
 
 export function VoteInput({
   value,
@@ -23,9 +24,9 @@ export function VoteInput({
       <Button
         disabled={disabled || value <= min}
         onClick={() => onChange(Math.max(min, value - increment))}
-        className="bg-gray-700 w-8 py-1 text-white hover:bg-gray-500 rounded-r-none"
+        className="bg-gray-700 w-8 py-1 text-white hover:bg-gray-500 rounded-r-none rounded-l-full"
       >
-        -
+        <Minus className="h-3 min-w-3" />
       </Button>
       <Input
         disabled={disabled}
@@ -41,9 +42,9 @@ export function VoteInput({
       <Button
         disabled={disabled || value >= max}
         onClick={() => onChange(Math.min(max, value + increment))}
-        className="bg-gray-700 w-8 py-1 text-white hover:bg-gray-500 rounded-l-none"
+        className="bg-gray-700 w-8 py-1 text-white hover:bg-gray-500 rounded-l-none rounded-r-full"
       >
-        +
+        <Plus className="h-3 min-w-3" />
       </Button>
       <span className="w-12 text-right hidden sm:block">
         {value > 0 ? Math.round((value / total) * 100) : 0}%

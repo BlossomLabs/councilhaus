@@ -44,16 +44,18 @@ export const useAllocation = (
     enabled: !!council && !!councilMember,
   });
   const allocation = data?.allocations?.[0];
+  const votingPower = Number(data?.councilMember?.votingPower ?? 0);
   return {
-    data: allocation
-      ? Object.fromEntries(
-          allocation.grantees.map((g, index) => [
-            g.account as `0x${string}`,
-            Number(allocation.amounts[index]),
-          ]),
-        )
-      : undefined,
-    votingPower: Number(data?.councilMember?.votingPower ?? 0),
+    data:
+      allocation && votingPower
+        ? Object.fromEntries(
+            allocation.grantees.map((g, index) => [
+              g.account as `0x${string}`,
+              Number(allocation.amounts[index]),
+            ]),
+          )
+        : undefined,
+    votingPower,
     isLoading,
   };
 };

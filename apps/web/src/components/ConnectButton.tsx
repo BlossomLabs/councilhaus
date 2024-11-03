@@ -11,6 +11,8 @@ export function ConnectButton() {
   return address ? (
     <RainbowConnectButton showBalance={false} />
   ) : (
-    <Button onClick={openConnectModal}>Connect Wallet</Button>
+    <Button className="rounded-full" onClick={openConnectModal}>
+      Connect Wallet
+    </Button>
   );
 }

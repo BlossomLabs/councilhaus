@@ -28,7 +28,10 @@ const VotingButton = ({
   return (
     <Button
       disabled={disabled || !address || isLoading}
-      className={cn("w-full py-2 rounded-lg mt-4 font-bold", className)}
+      className={cn(
+        "w-full py-2 rounded-full mt-4 font-bold tracking-wider",
+        className,
+      )}
       onClick={() => {
         setIsLoading(true);
         vote(
@@ -55,7 +58,7 @@ const VotingButton = ({
           });
       }}
     >
-      {isLoading ? "Voting..." : address ? "Vote" : "Wallet not connected"}
+      {isLoading ? "Voting…" : address ? "Vote" : "Wallet not connected"}
     </Button>
   );
 };
