@@ -1,7 +1,6 @@
 import type { MetaFunction } from "@remix-run/node";
 import {
   Links,
-  LiveReload,
   Meta,
   Outlet,
   Scripts,
@@ -22,8 +21,15 @@ import {
   SOCIAL_TWITTER,
 } from "../../../../constants";
 
-import "@repo/ui/globals.css";
-import "@rainbow-me/rainbowkit/styles.css";
+import rainbowStyles from "@rainbow-me/rainbowkit/styles.css?url";
+import styles from "@repo/ui/globals.css?url";
+
+export function links() {
+  return [
+    { rel: "stylesheet", href: styles },
+    { rel: "stylesheet", href: rainbowStyles },
+  ];
+}
 
 export const meta: MetaFunction = () => [
   {
