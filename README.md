@@ -69,3 +69,4 @@ The smart contracts are in the `contracts` directory, and the frontend is in the
 ### Environment Variables
 
 - Use `VITE_WALLETCONNECT_PROJECT_ID` for your wallet connect project ID.
+- Use `VITE_SITE_URL` for your site URL. Otherwise, the default will be `https://council.haus`.
