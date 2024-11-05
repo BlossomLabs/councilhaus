@@ -25,6 +25,18 @@ import styles from "@repo/ui/globals.css?url";
 
 export function links() {
   return [
+    {
+      rel: "icon",
+      href: "/logo-dark.svg",
+      type: "image/svg+xml",
+    },
+    { rel: "shortcut icon", href: "/favicon.ico" },
+    {
+      rel: "apple-touch-icon",
+      sizes: "180x180",
+      href: "/apple-touch-icon.png",
+    },
+    { rel: "manifest", href: "/manifest.json" },
     { rel: "stylesheet", href: styles },
     { rel: "stylesheet", href: rainbowStyles },
   ];
@@ -36,14 +48,6 @@ export const meta: MetaFunction = () => [
     title: SITE_NAME,
     viewport: "width=device-width,initial-scale=1",
   },
-  {
-    rel: "icon",
-    href: "/logo-dark.svg",
-    type: "image/svg+xml",
-  },
-  { rel: "shortcut icon", href: "/favicon.ico" },
-  { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
-  { rel: "manifest", href: "/manifest.json" },
   { name: "description", content: SITE_DESCRIPTION },
   { name: "theme-color", content: "#111827" },
   { name: "color-scheme", content: "dark" },
