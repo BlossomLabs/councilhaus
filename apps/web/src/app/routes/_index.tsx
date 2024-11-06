@@ -1,13 +1,10 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { redirect } from "@remix-run/react";
 import { DEFAULT_COUNCIL_ADDRESS, NETWORK } from "../../../../../constants";
 
+export async function clientLoader() {
+  return redirect(`/c/${NETWORK}/${DEFAULT_COUNCIL_ADDRESS}`);
+}
+
 export default function IndexPage() {
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    navigate(`/c/${NETWORK}/${DEFAULT_COUNCIL_ADDRESS}`);
-  }, [navigate]);
-
   return null;
 }
