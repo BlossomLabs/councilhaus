@@ -43,35 +43,27 @@ export function links() {
 }
 
 export const meta: MetaFunction = () => [
-  {
-    charset: "utf-8",
-    title: SITE_NAME,
-    viewport: "width=device-width,initial-scale=1",
-  },
+  { title: SITE_NAME },
+  { name: "title", content: SITE_NAME },
   { name: "description", content: SITE_DESCRIPTION },
   { name: "theme-color", content: "#111827" },
-  { name: "color-scheme", content: "dark" },
-
   { name: "image", content: `${SITE_URL}/logo-bg.svg` },
-  { name: "og:image", content: `${SITE_URL}/opengraph-image.webp` },
-  { name: "og:title", content: SITE_NAME },
-  { name: "og:description", content: SITE_DESCRIPTION },
-  { name: "og:url", content: SITE_URL },
-  { name: "og:type", content: "website" },
-  { name: "og:site_name", content: SITE_NAME },
-  { name: "og:locale", content: "en_US" },
-  { name: "twitter:card", content: "summary_large_image" },
+  { property: "og:type", content: "website" },
+  { property: "og:title", content: SITE_NAME },
+  { property: "og:description", content: SITE_DESCRIPTION },
+  { property: "og:url", content: SITE_URL },
+  { property: "og:image", content: `${SITE_URL}/opengraph-image.webp` },
+  { name: "twitter:card", content: "summary" },
   { name: "twitter:image", content: `${SITE_URL}/opengraph-image.webp` },
-  { name: "twitter:title", content: SITE_NAME },
-  { name: "twitter:description", content: SITE_DESCRIPTION },
   { name: "twitter:site", content: SOCIAL_TWITTER },
-  { name: "twitter:creator", content: SOCIAL_TWITTER },
 ];
 
 export default function App() {
   return (
     <html lang="en">
       <head>
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
       </head>

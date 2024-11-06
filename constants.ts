@@ -2,7 +2,7 @@ export const SITE_NAME = "CouncilHaus";
 export const SITE_DESCRIPTION =
   "Democratically allocate a budget across projects";
 export const SITE_URL = import.meta.env.VITE_SITE_URL || "https://council.haus";
-export const SOCIAL_TWITTER = "blossom_labs";
+export const SOCIAL_TWITTER = "@blossom_labs";
 export const SOCIAL_GITHUB = "BlossomLabs/CouncilHaus";
 
 export const DEFAULT_COUNCIL_ADDRESS =
