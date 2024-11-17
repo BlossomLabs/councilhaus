@@ -44,7 +44,10 @@ export function links() {
 
 export const meta: MetaFunction = () => [
   { charset: "utf-8" },
-  { viewport: "width=device-width, initial-scale=1" },
+  {
+    name: "viewport",
+    content: "width=device-width,initial-scale=1",
+  },
   { title: SITE_NAME },
   { name: "title", content: SITE_NAME },
   { name: "description", content: SITE_DESCRIPTION },
@@ -55,7 +58,7 @@ export const meta: MetaFunction = () => [
   { property: "og:description", content: SITE_DESCRIPTION },
   { property: "og:url", content: SITE_URL },
   { property: "og:image", content: `${SITE_URL}/opengraph-image.webp` },
-  { name: "twitter:card", content: "summary" },
+  { name: "twitter:card", content: "summary_large_image" },
   { name: "twitter:image", content: `${SITE_URL}/opengraph-image.webp` },
   { name: "twitter:site", content: SOCIAL_TWITTER },
 ];
